@@ -1,0 +1,173 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: musicapp
+      POSTGRES_USER: musicuser
+      POSTGRES_PASSWORD: musicpass123
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U musicuser -d musicapp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass redis123
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # FastAPI Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://musicuser:musicpass123@postgres:5432/musicapp
+      - REDIS_URL=redis://:redis123@redis:6379
+      - SECRET_KEY=your-super-secret-key-change-this-in-production
+      - SMTP_SERVER=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USERNAME=your-email@gmail.com
+      - SMTP_PASSWORD=your-app-password
+      - APP_NAME=MusicApp
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@musicapp.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+---
+
+# Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create non-root user
+RUN adduser --disabled-password --gecos '' appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 8000
+
+# Command to run the application
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+---
+
+# .env.example
+# Database Configuration
+DATABASE_URL=postgresql+asyncpg://musicuser:musicpass123@localhost:5432/musicapp
+
+# Redis Configuration
+REDIS_URL=redis://:redis123@localhost:6379
+
+# JWT Configuration
+SECRET_KEY=your-super-secret-key-change-this-in-production-use-long-random-string
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+REFRESH_TOKEN_EXPIRE_DAYS=7
+EMAIL_VERIFICATION_EXPIRE_HOURS=24
+
+# Email Configuration (Gmail example)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+
+# Application Configuration
+APP_NAME=MusicApp
+
+---
+
+# init-db.sql
+-- Create database extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+-- Create indexes for better performance
+-- These will be created by Alembic migrations, but good to have for reference
+
+-- User table indexes
+-- CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+-- CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+-- CREATE INDEX IF NOT EXISTS idx_users_is_active ON users(is_active);
+-- CREATE INDEX IF NOT EXISTS idx_users_is_verified ON users(is_verified);
+-- CREATE INDEX IF NOT EXISTS idx_users_created_at ON users(created_at);
+
+-- Login attempts indexes
+-- CREATE INDEX IF NOT EXISTS idx_login_attempts_email ON login_attempts(email);
+-- CREATE INDEX IF NOT EXISTS idx_login_attempts_ip ON login_attempts(ip_address);
+-- CREATE INDEX IF NOT EXISTS idx_login_attempts_created_at ON login_attempts(created_at);
+
+-- Email verification indexes
+-- CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON email_verifications(token);
+-- CREATE INDEX IF NOT EXISTS idx_email_verifications_user_id ON email_verifications(user_id);
+-- CREATE INDEX IF NOT EXISTS idx_email_verifications_expires_at ON email_verifications(expires_at);
+
+-- Refresh token indexes
+-- CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
+-- CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+-- CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
