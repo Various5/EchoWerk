@@ -1,4 +1,4 @@
-// src/contexts/AuthContext.js - Production Ready Auth Context
+// src/contexts/AuthContext.js - Fixed AuthContext
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -14,7 +14,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 10000,
 });
 
 // Request interceptor to add auth token
@@ -72,13 +72,13 @@ api.interceptors.response.use(
 
     // Handle network errors
     if (!error.response) {
-      toast.error('🌐 Neural network connection failed. Please check your quantum link.');
+      toast.error('Network connection failed. Please check your connection.');
       return Promise.reject(new Error('Network connection failed'));
     }
 
     // Handle rate limiting
     if (error.response?.status === 429) {
-      toast.error('⚡ Quantum overload detected. Please wait before trying again.');
+      toast.error('Too many requests. Please wait before trying again.');
     }
 
     return Promise.reject(error);
@@ -97,22 +97,28 @@ export const AuthProvider = ({ children }) => {
       const userData = localStorage.getItem('user');
 
       if (token && userData) {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
         setIsAuthenticated(true);
 
         // Verify token is still valid
-        await api.get('/auth/me');
+        try {
+          const response = await api.get('/auth/me');
+          const currentUser = response.data;
 
-        // Update user data from server
-        const response = await api.get('/auth/me');
-        const currentUser = response.data;
-
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        setUser(currentUser);
+          localStorage.setItem('user', JSON.stringify(currentUser));
+          setUser(currentUser);
+        } catch (error) {
+          // Token invalid, clear auth
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
+          setUser(null);
+          setIsAuthenticated(false);
+        }
       }
     } catch (error) {
       console.error('Auth initialization failed:', error);
-      // Clear invalid tokens
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
@@ -144,7 +150,7 @@ export const AuthProvider = ({ children }) => {
 
       // Handle 2FA requirement
       if (!data.success && data.requires_2fa) {
-        toast('🔐 Quantum authentication required', { icon: '🛡️' });
+        toast('Two-factor authentication required', { icon: '🔐' });
         return { success: false, requires2FA: true };
       }
 
@@ -157,7 +163,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         setIsAuthenticated(true);
 
-        toast.success('🎉 Neural link established! Welcome to the quantum realm.');
+        toast.success('Welcome back!');
         return { success: true };
       }
 
@@ -165,14 +171,14 @@ export const AuthProvider = ({ children }) => {
 
     } catch (error) {
       const message = error.response?.data?.detail || 'Authentication failed';
-      toast.error(`🚫 ${message}`);
+      toast.error(String(message));
 
       // Return specific error info for 2FA
-      if (error.response?.status === 401 && message.includes('2FA')) {
+      if (error.response?.status === 401 && String(message).includes('2FA')) {
         return { success: false, requires2FA: true };
       }
 
-      return { success: false, error: message };
+      return { success: false, error: String(message) };
     } finally {
       setLoading(false);
     }
@@ -185,15 +191,19 @@ export const AuthProvider = ({ children }) => {
 
       await api.post('/auth/register', userData);
 
-      toast.success('🎊 Quantum identity created! Neural activation link sent to your dimension.');
+      toast.success('Account created! Please check your email to verify your account.');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail ||
-                     error.response?.data?.message ||
-                     'Registration failed';
+      let message = 'Registration failed';
 
-      toast.error(`❌ ${message}`);
+      if (error.response?.data?.detail) {
+        message = String(error.response.data.detail);
+      } else if (error.response?.data?.message) {
+        message = String(error.response.data.message);
+      }
+
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -212,7 +222,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('user');
       setUser(null);
       setIsAuthenticated(false);
-      toast.success('🌌 Neural link disconnected. Safe travels through the cosmos.');
+      toast.success('Successfully signed out');
     }
   };
 
@@ -227,12 +237,12 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      toast.success('✨ Quantum profile updated successfully!');
+      toast.success('Profile updated successfully!');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail || 'Profile update failed';
-      toast.error(`🔧 ${message}`);
+      const message = String(error.response?.data?.detail || 'Profile update failed');
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -249,12 +259,12 @@ export const AuthProvider = ({ children }) => {
         new_password: newPassword,
       });
 
-      toast.success('🔑 Quantum passphrase updated successfully!');
+      toast.success('Password updated successfully!');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail || 'Password change failed';
-      toast.error(`🚫 ${message}`);
+      const message = String(error.response?.data?.detail || 'Password change failed');
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -265,13 +275,11 @@ export const AuthProvider = ({ children }) => {
   const setup2FA = async (password) => {
     try {
       const response = await api.post('/auth/2fa/setup', { password });
-
-      toast.success('🛡️ Quantum guard generator activated!');
+      toast.success('Two-factor authentication setup initiated!');
       return { success: true, data: response.data };
-
     } catch (error) {
-      const message = error.response?.data?.detail || '2FA setup failed';
-      toast.error(`🔒 ${message}`);
+      const message = String(error.response?.data?.detail || '2FA setup failed');
+      toast.error(message);
       return { success: false, error: message };
     }
   };
@@ -286,17 +294,17 @@ export const AuthProvider = ({ children }) => {
       });
 
       // Update user state
-      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       const updatedUser = { ...currentUser, is_2fa_enabled: true };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      toast.success('🛡️ Quantum guard activated! Your neural link is now ultra-secure.');
+      toast.success('Two-factor authentication enabled successfully!');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail || '2FA activation failed';
-      toast.error(`⚠️ ${message}`);
+      const message = String(error.response?.data?.detail || '2FA activation failed');
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -311,17 +319,17 @@ export const AuthProvider = ({ children }) => {
       await api.post('/auth/2fa/disable', { password });
 
       // Update user state
-      const currentUser = JSON.parse(localStorage.getItem('user'));
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
       const updatedUser = { ...currentUser, is_2fa_enabled: false };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
 
-      toast.success('🔓 Quantum guard deactivated.');
+      toast.success('Two-factor authentication disabled');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail || '2FA deactivation failed';
-      toast.error(`🚫 ${message}`);
+      const message = String(error.response?.data?.detail || '2FA deactivation failed');
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -331,33 +339,35 @@ export const AuthProvider = ({ children }) => {
   // Request password reset
   const requestPasswordReset = async (email) => {
     try {
+      setLoading(true);
       await api.post('/auth/forgot-password', { email });
-
-      toast.success('🌌 Quantum reset link sent to your dimensional address!');
+      toast.success('Password reset email sent!');
       return { success: true };
-
     } catch (error) {
-      const message = error.response?.data?.detail || 'Reset request failed';
-      toast.error(`📧 ${message}`);
+      const message = String(error.response?.data?.detail || 'Reset request failed');
+      toast.error(message);
       return { success: false, error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
   // Reset password
   const resetPassword = async (token, newPassword) => {
     try {
+      setLoading(true);
       await api.post('/auth/reset-password', {
         token,
         new_password: newPassword,
       });
-
-      toast.success('🔑 Quantum passphrase reset successfully!');
+      toast.success('Password reset successfully!');
       return { success: true };
-
     } catch (error) {
-      const message = error.response?.data?.detail || 'Password reset failed';
-      toast.error(`⚠️ ${message}`);
+      const message = String(error.response?.data?.detail || 'Password reset failed');
+      toast.error(message);
       return { success: false, error: message };
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -373,12 +383,12 @@ export const AuthProvider = ({ children }) => {
         setUser(updatedUser);
       }
 
-      toast.success('✅ Neural link verified! Welcome to the quantum realm!');
+      toast.success('Email verified successfully!');
       return { success: true };
 
     } catch (error) {
-      const message = error.response?.data?.detail || 'Email verification failed';
-      toast.error(`📧 ${message}`);
+      const message = String(error.response?.data?.detail || 'Email verification failed');
+      toast.error(message);
       return { success: false, error: message };
     }
   };
@@ -386,12 +396,17 @@ export const AuthProvider = ({ children }) => {
   // Resend verification email
   const resendVerification = async () => {
     try {
+      if (!user?.email) {
+        toast.error('No email address found');
+        return { success: false, error: 'No email address found' };
+      }
+
       await api.get(`/auth/resend-verification/${user.email}`);
-      toast.success('📨 Verification transmission sent to your quantum address!');
+      toast.success('Verification email sent!');
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.detail || 'Failed to resend verification';
-      toast.error(`📧 ${message}`);
+      const message = String(error.response?.data?.detail || 'Failed to resend verification');
+      toast.error(message);
       return { success: false, error: message };
     }
   };
@@ -402,11 +417,11 @@ export const AuthProvider = ({ children }) => {
 
     switch (permission) {
       case 'verified':
-        return user.is_verified;
+        return Boolean(user.is_verified);
       case '2fa':
-        return user.is_2fa_enabled;
+        return Boolean(user.is_2fa_enabled);
       case 'admin':
-        return user.is_superuser;
+        return Boolean(user.is_superuser);
       default:
         return false;
     }

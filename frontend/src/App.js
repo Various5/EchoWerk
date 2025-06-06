@@ -1,4 +1,4 @@
-// src/App.js - Complete Modern Application
+// src/App.js - Clean Professional Application
 import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
@@ -18,8 +18,8 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
 
-// Quantum Loading Component
-const QuantumLoader = () => (
+// Loading Component
+const AppLoader = () => (
   <div className="fixed inset-0 bg-void flex items-center justify-center z-50">
     <div className="text-center">
       <div className="relative w-20 h-20 mx-auto mb-4">
@@ -28,53 +28,15 @@ const QuantumLoader = () => (
         {/* Middle Ring */}
         <div className="absolute inset-2 border-4 border-neon-purple/50 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
         {/* Inner Core */}
-        <div className="absolute inset-6 bg-gradient-cyber rounded-full flex items-center justify-center">
+        <div className="absolute inset-6 bg-gradient-primary rounded-full flex items-center justify-center">
           <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
         </div>
       </div>
-      <h3 className="text-lg font-semibold holographic-text mb-2">Loading Quantum Interface</h3>
-      <p className="text-gray-400 text-sm">Initializing neural pathways...</p>
+      <h3 className="text-lg font-semibold text-white mb-2">Loading Application</h3>
+      <p className="text-gray-400 text-sm">Please wait...</p>
     </div>
   </div>
 );
-
-// Background Animation Component
-const QuantumBackground = () => {
-  useEffect(() => {
-    // Add dynamic particles
-    const createParticle = () => {
-      const particle = document.createElement('div');
-      particle.className = 'fixed w-1 h-1 bg-neon-blue/30 rounded-full pointer-events-none';
-      particle.style.left = Math.random() * 100 + 'vw';
-      particle.style.top = Math.random() * 100 + 'vh';
-      particle.style.animation = `float ${3 + Math.random() * 4}s ease-in-out infinite`;
-      particle.style.animationDelay = Math.random() * 2 + 's';
-
-      document.body.appendChild(particle);
-
-      // Remove particle after animation
-      setTimeout(() => {
-        if (particle.parentNode) {
-          particle.parentNode.removeChild(particle);
-        }
-      }, 7000);
-    };
-
-    // Create particles periodically
-    const particleInterval = setInterval(createParticle, 2000);
-
-    // Initial burst of particles
-    for (let i = 0; i < 10; i++) {
-      setTimeout(createParticle, i * 200);
-    }
-
-    return () => {
-      clearInterval(particleInterval);
-    };
-  }, []);
-
-  return null;
-};
 
 // Custom Route Transition Wrapper
 const PageTransition = ({ children }) => (
@@ -92,29 +54,29 @@ const ErrorFallback = ({ error, resetErrorBoundary }) => (
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
         </svg>
       </div>
-      <h2 className="text-xl font-bold text-white mb-2">Quantum Error Detected</h2>
+      <h2 className="text-xl font-bold text-white mb-2">Application Error</h2>
       <p className="text-gray-400 mb-6">
-        A temporal anomaly has occurred in the system matrix.
+        Something went wrong. Please try refreshing the page.
       </p>
       <div className="space-y-3">
         <button
           onClick={resetErrorBoundary}
           className="btn btn-primary w-full"
         >
-          Restore Quantum State
+          Try Again
         </button>
         <button
           onClick={() => window.location.href = '/'}
           className="btn btn-secondary w-full"
         >
-          Return to Origin
+          Go Home
         </button>
       </div>
       {process.env.NODE_ENV === 'development' && (
         <details className="mt-4 text-left">
           <summary className="text-sm text-gray-500 cursor-pointer">Technical Details</summary>
           <pre className="text-xs text-red-400 mt-2 overflow-auto max-h-32 bg-gray-900 p-2 rounded">
-            {error.stack}
+            {error?.stack || String(error)}
           </pre>
         </details>
       )}
@@ -127,16 +89,14 @@ function App() {
   // Add global keyboard shortcuts
   useEffect(() => {
     const handleKeyboard = (e) => {
-      // Ctrl/Cmd + K for quantum search
+      // Ctrl/Cmd + K for search
       if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
         e.preventDefault();
-        // TODO: Open search modal
-        console.log('Quantum search activated');
+        console.log('Search activated');
       }
 
       // Esc to close modals
       if (e.key === 'Escape') {
-        // TODO: Close any open modals
         console.log('Escape pressed');
       }
     };
@@ -145,26 +105,11 @@ function App() {
     return () => document.removeEventListener('keydown', handleKeyboard);
   }, []);
 
-  // Preload critical resources
-  useEffect(() => {
-    const preloadImages = [
-      // Add any critical images here
-    ];
-
-    preloadImages.forEach(src => {
-      const img = new Image();
-      img.src = src;
-    });
-  }, []);
-
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <AuthProvider>
         <Router>
           <div className="App">
-            {/* Global Background Effects */}
-            <QuantumBackground />
-
             {/* Toast Notifications */}
             <Toaster
               position="top-right"
@@ -200,7 +145,7 @@ function App() {
             />
 
             {/* Route Definitions */}
-            <Suspense fallback={<QuantumLoader />}>
+            <Suspense fallback={<AppLoader />}>
               <Routes>
                 {/* Public Routes */}
                 <Route
@@ -287,16 +232,16 @@ function App() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                               </svg>
                             </div>
-                            <h2 className="text-xl font-bold text-white mb-2">Music Universe</h2>
+                            <h2 className="text-xl font-bold text-white mb-2">Music Features</h2>
                             <p className="text-gray-400 mb-6">
-                              The quantum music dimension is currently being constructed.
-                              Neural patterns are being optimized for the ultimate sonic experience.
+                              Music features are coming soon. We're working on an amazing
+                              experience for managing and playing your music collection.
                             </p>
                             <button
                               onClick={() => window.history.back()}
                               className="btn btn-primary"
                             >
-                              Return to Command Center
+                              Back to Dashboard
                             </button>
                           </div>
                         </div>
@@ -312,15 +257,16 @@ function App() {
                     <PageTransition>
                       <div className="min-h-screen flex items-center justify-center bg-void">
                         <div className="glass-card p-8 max-w-2xl">
-                          <h1 className="text-2xl font-bold text-white mb-6">Quantum Protocols</h1>
+                          <h1 className="text-2xl font-bold text-white mb-6">Terms of Service</h1>
                           <div className="prose prose-invert">
                             <p className="text-gray-300">
-                              By accessing the EchoWerk quantum realm, you agree to maintain neural harmony
-                              and respect the cosmic music frequencies of all dimensional entities.
+                              By using EchoWerk, you agree to our terms of service and privacy policy.
+                              Our platform is designed to provide secure music management with respect
+                              for user privacy and data protection.
                             </p>
                             <p className="text-gray-300 mt-4">
-                              These terms are subject to quantum superposition and may exist in multiple
-                              states simultaneously until observed by conscious entities.
+                              These terms are subject to updates and changes. Users will be notified
+                              of any significant changes to the terms of service.
                             </p>
                           </div>
                         </div>
@@ -334,15 +280,15 @@ function App() {
                     <PageTransition>
                       <div className="min-h-screen flex items-center justify-center bg-void">
                         <div className="glass-card p-8 max-w-2xl">
-                          <h1 className="text-2xl font-bold text-white mb-6">Neural Privacy Protocols</h1>
+                          <h1 className="text-2xl font-bold text-white mb-6">Privacy Policy</h1>
                           <div className="prose prose-invert">
                             <p className="text-gray-300">
-                              Your neural patterns and quantum signatures are encrypted using advanced
-                              dimensional folding techniques. No consciousness can access your data
-                              without proper quantum entanglement permissions.
+                              Your privacy is important to us. We use industry-standard encryption
+                              and security practices to protect your personal information and music data.
                             </p>
                             <p className="text-gray-300 mt-4">
-                              We respect the privacy of all beings across all dimensions and parallel universes.
+                              We do not sell or share your personal information with third parties
+                              without your explicit consent.
                             </p>
                           </div>
                         </div>
@@ -351,36 +297,34 @@ function App() {
                   }
                 />
 
-                {/* 404 - Dimensional Void */}
+                {/* 404 - Page Not Found */}
                 <Route
                   path="*"
                   element={
                     <PageTransition>
                       <div className="min-h-screen flex items-center justify-center bg-void">
                         <div className="glass-card p-8 text-center max-w-md">
-                          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-holographic rounded-full flex items-center justify-center animate-spin">
-                            <div className="w-12 h-12 bg-void rounded-full flex items-center justify-center">
-                              <span className="text-2xl">∅</span>
-                            </div>
+                          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-primary rounded-full flex items-center justify-center">
+                            <span className="text-3xl">404</span>
                           </div>
-                          <h1 className="text-3xl font-bold text-white mb-2">404</h1>
-                          <h2 className="text-xl font-semibold text-neon-blue mb-4">Dimensional Void</h2>
+                          <h1 className="text-3xl font-bold text-white mb-2">Page Not Found</h1>
+                          <h2 className="text-xl font-semibold text-neon-blue mb-4">Lost in the Music</h2>
                           <p className="text-gray-400 mb-6">
-                            You've discovered a rift in the space-time continuum.
-                            This dimension doesn't exist in our quantum matrix.
+                            The page you're looking for doesn't exist.
+                            Let's get you back on track.
                           </p>
                           <div className="space-y-3">
                             <button
                               onClick={() => window.history.back()}
                               className="btn btn-primary w-full"
                             >
-                              Return to Previous Dimension
+                              Go Back
                             </button>
                             <button
                               onClick={() => window.location.href = '/'}
                               className="btn btn-secondary w-full"
                             >
-                              Teleport to Origin
+                              Go Home
                             </button>
                           </div>
                         </div>
@@ -391,20 +335,21 @@ function App() {
               </Routes>
             </Suspense>
 
-            {/* Global Keyboard Shortcuts Display (Dev Mode) */}
+            {/* Development Tools */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="fixed bottom-4 left-4 text-xs text-gray-500 font-mono bg-gray-900/80 p-2 rounded border border-gray-700">
-                <div>⌘/Ctrl + K: Quantum Search</div>
-                <div>Esc: Close Modals</div>
-              </div>
-            )}
+              <>
+                {/* Keyboard Shortcuts */}
+                <div className="fixed bottom-4 left-4 text-xs text-gray-500 font-mono bg-gray-900/80 p-2 rounded border border-gray-700">
+                  <div>⌘/Ctrl + K: Search</div>
+                  <div>Esc: Close Modals</div>
+                </div>
 
-            {/* Performance Monitor (Dev Mode) */}
-            {process.env.NODE_ENV === 'development' && (
-              <div className="fixed top-4 left-4 text-xs text-gray-500 font-mono bg-gray-900/80 p-2 rounded border border-gray-700">
-                <div>React: {React.version}</div>
-                <div>Build: {process.env.REACT_APP_VERSION || 'dev'}</div>
-              </div>
+                {/* Build Info */}
+                <div className="fixed top-4 left-4 text-xs text-gray-500 font-mono bg-gray-900/80 p-2 rounded border border-gray-700">
+                  <div>React: {React.version}</div>
+                  <div>Build: {process.env.REACT_APP_VERSION || 'dev'}</div>
+                </div>
+              </>
             )}
           </div>
         </Router>
