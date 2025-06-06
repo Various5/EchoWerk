@@ -1,4 +1,4 @@
-# backend/main.py - FIXED VERSION
+# backend/main.py - FIXED VERSION for Pydantic 2.0
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Response, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -7,15 +7,14 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete
 from sqlalchemy.orm import selectinload
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, field_validator, Field
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
+from typing import Optional, List, Union
 import secrets
 import os
 import asyncio
 import logging
 from contextlib import asynccontextmanager
-from typing import Union
 
 # Import our modules
 from database import get_db, User, EmailVerification, PasswordReset, RefreshToken, LoginAttempt, settings
@@ -63,7 +62,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Configuration - FIXED with more permissive settings for development
+# CORS Configuration - FIXED with more permissive settings
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -79,7 +78,7 @@ app.add_middleware(
 
 
 # ================================
-# ENHANCED PYDANTIC MODELS - FIXED
+# FIXED PYDANTIC MODELS - Pydantic 2.0 Compatible
 # ================================
 
 class UserRegister(BaseModel):
@@ -89,16 +88,18 @@ class UserRegister(BaseModel):
     first_name: str
     last_name: str
 
-    @validator('username')
-    def validate_username(cls, v):
+    @field_validator('username')
+    @classmethod
+    def validate_username(cls, v: str) -> str:
         if not v or len(v.strip()) < 3:
             raise ValueError('Username must be at least 3 characters')
         if not v.replace('_', '').isalnum():
             raise ValueError('Username can only contain letters, numbers, and underscores')
         return v.lower().strip()
 
-    @validator('password')
-    def validate_password(cls, v):
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
         if not v:
             raise ValueError('Password is required')
         is_valid, errors = SecurityUtils.validate_password_strength(v)
@@ -106,14 +107,16 @@ class UserRegister(BaseModel):
             raise ValueError(f"Password requirements: {', '.join(errors)}")
         return v
 
-    @validator('first_name')
-    def validate_first_name(cls, v):
+    @field_validator('first_name')
+    @classmethod
+    def validate_first_name(cls, v: str) -> str:
         if not v or len(v.strip()) < 1:
             raise ValueError('First name is required')
         return v.strip()
 
-    @validator('last_name')
-    def validate_last_name(cls, v):
+    @field_validator('last_name')
+    @classmethod
+    def validate_last_name(cls, v: str) -> str:
         if not v or len(v.strip()) < 1:
             raise ValueError('Last name is required')
         return v.strip()
@@ -122,17 +125,18 @@ class UserRegister(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-    totp_code: Union[str, None] = None
-    backup_code: Union[str, None] = None
+    # FIXED: Optional fields with explicit None defaults for Pydantic 2.0
+    totp_code: Optional[str] = None
+    backup_code: Optional[str] = None
 
-    class Config:
-        # Allow None values explicitly
-        validate_assignment = True
-    @validator('totp_code', 'backup_code', pre=True)
+    @field_validator('totp_code', 'backup_code', mode='before')
+    @classmethod
     def empty_str_to_none(cls, v):
+        """Convert empty strings to None"""
         if v == "" or v is None:
             return None
-        return v
+        return str(v).strip() if v else None
+
 
 class UserUpdate(BaseModel):
     first_name: Optional[str] = None
@@ -144,8 +148,9 @@ class PasswordChange(BaseModel):
     current_password: str
     new_password: str
 
-    @validator('new_password')
-    def validate_new_password(cls, v):
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v: str) -> str:
         is_valid, errors = SecurityUtils.validate_password_strength(v)
         if not is_valid:
             raise ValueError(f"Password requirements: {', '.join(errors)}")
@@ -165,12 +170,12 @@ class UserResponse(BaseModel):
     id: str
     email: str
     username: str
-    first_name: Optional[str]
-    last_name: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     is_verified: bool
     is_2fa_enabled: bool
     created_at: datetime
-    last_login: Optional[datetime]
+    last_login: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -220,12 +225,26 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     """Handle Pydantic validation errors with clearer messages"""
     errors = []
     for error in exc.errors():
-        field = error['loc'][-1] if error['loc'] else 'field'
+        # FIXED: Better error location parsing
+        field_path = []
+        for loc_item in error['loc']:
+            if isinstance(loc_item, str):
+                field_path.append(loc_item)
+            elif isinstance(loc_item, int):
+                field_path.append(f"[{loc_item}]")
+
+        field = ".".join(field_path) if field_path else 'field'
         message = error['msg']
+
+        # Skip 'body' prefix for cleaner error messages
+        if field.startswith('body.'):
+            field = field[5:]
+
         errors.append(f"{field}: {message}")
 
     error_message = "; ".join(errors)
     logger.error(f"Validation error: {error_message}")
+    logger.error(f"Full validation errors: {exc.errors()}")
 
     return JSONResponse(
         status_code=422,
@@ -416,6 +435,7 @@ async def register_user(
     """Register new user with email verification"""
 
     logger.info(f"Registration attempt for email: {user_data.email}")
+    logger.info(f"Registration data: {user_data.model_dump(exclude={'password'})}")
 
     try:
         # Check if user already exists
@@ -487,6 +507,7 @@ async def login_user(
     user_agent = request.headers.get("user-agent", "")
 
     logger.info(f"Login attempt for email: {login_data.email}")
+    logger.info(f"Login data: {login_data.model_dump(exclude={'password'})}")
 
     try:
         # Find user
@@ -584,7 +605,7 @@ async def login_user(
             success=True,
             access_token=access_token,
             refresh_token=refresh_token,
-            user=UserResponse.from_orm(user),
+            user=UserResponse.model_validate(user),
             message="Login successful"
         )
 
@@ -598,8 +619,6 @@ async def login_user(
             error_code="SERVER_ERROR"
         )
 
-
-# Additional routes would follow the same pattern...
 
 @app.get("/auth/verify-email/{token}")
 async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
@@ -710,7 +729,7 @@ async def verify_email(token: str, db: AsyncSession = Depends(get_db)):
 @app.get("/auth/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
-    return UserResponse.from_orm(current_user)
+    return UserResponse.model_validate(current_user)
 
 
 if __name__ == "__main__":

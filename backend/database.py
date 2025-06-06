@@ -1,4 +1,4 @@
-# database.py
+# backend/database.py - FIXED VERSION
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, LargeBinary
@@ -6,31 +6,51 @@ from sqlalchemy.dialects.postgresql import UUID
 from datetime import datetime, timezone
 import uuid
 from pydantic_settings import BaseSettings
+import os
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://user:password@localhost/musicapp"
+    # Database
+    database_url: str = "postgresql+asyncpg://musicuser:musicpass123@localhost:5432/musicapp"
+
+    # Redis
     redis_url: str = "redis://localhost:6379"
-    secret_key: str = "your-super-secret-key-change-this"
+
+    # JWT Settings
+    secret_key: str = "your-super-secret-key-change-this-in-production"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7
+
+    # Email Settings
     email_verification_expire_hours: int = 24
     smtp_server: str = "smtp.gmail.com"
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: str = ""
-    app_name: str = "MusicApp"
+
+    # App Settings
+    app_name: str = "EchoWerk"
 
     class Config:
-        env_file = "../asd"
+        env_file = ".env"
+        case_sensitive = False
 
 
+# Initialize settings
 settings = Settings()
 
 # Database setup
-engine = create_async_engine(settings.database_url, echo=True)
-AsyncSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+engine = create_async_engine(
+    settings.database_url,
+    echo=False,  # Set to True for SQL debugging
+    future=True
+)
+AsyncSessionLocal = async_sessionmaker(
+    engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
 Base = declarative_base()
 
 
@@ -42,7 +62,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=False)
+    is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
 
@@ -58,8 +78,8 @@ class User(Base):
     last_login = Column(DateTime(timezone=True), nullable=True)
 
     # Profile fields
-    first_name = Column(String(50), nullable=True)
-    last_name = Column(String(50), nullable=True)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
     avatar_url = Column(String(500), nullable=True)
 
 
