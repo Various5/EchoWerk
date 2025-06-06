@@ -4,6 +4,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ParticleBackground from '../components/ParticleBackground';
 import { useMousePosition } from '../hooks/useMousePosition';
+
 import {
   Shield,
   Music,
