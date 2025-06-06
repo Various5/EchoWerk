@@ -1,4 +1,4 @@
-// frontend/src/pages/Register.js - Fixed Form Validation
+// frontend/src/pages/Register.js - EMERGENCY FIX for "Field Required" Error
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -22,6 +22,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -32,7 +33,7 @@ const Register = () => {
     clearErrors,
     trigger
   } = useForm({
-    mode: 'onChange', // Enable real-time validation
+    mode: 'onChange',
     defaultValues: {
       first_name: '',
       last_name: '',
@@ -94,46 +95,111 @@ const Register = () => {
   };
 
   const onSubmit = async (data) => {
-    console.log('Form submitted with data:', data); // Debug log
+    console.log('🚀 Form submission started');
+    console.log('📝 Raw form data:', data);
+
+    setIsSubmitting(true);
     clearErrors();
 
     try {
       // Validate all fields before submission
       const isFormValid = await trigger();
       if (!isFormValid) {
-        console.log('Form validation failed:', errors);
+        console.error('❌ Form validation failed:', errors);
+        setIsSubmitting(false);
         return;
       }
 
-      const { confirmPassword: _, ...submitData } = data;
-      console.log('Submitting data to API:', submitData); // Debug log
+      // CRITICAL: Clean and validate data with exact field names backend expects
+      const cleanData = {
+        email: (data.email || '').trim(),
+        username: (data.username || '').trim().toLowerCase(),
+        password: data.password || '',
+        first_name: (data.first_name || '').trim(),  // EXACT backend field name
+        last_name: (data.last_name || '').trim()     // EXACT backend field name
+      };
 
-      const result = await registerUser(submitData);
-      console.log('API response:', result); // Debug log
+      console.log('🧹 Cleaned data for backend:', cleanData);
+
+      // Validate all required fields are present and not empty
+      const requiredFields = ['email', 'username', 'password', 'first_name', 'last_name'];
+      const missingFields = requiredFields.filter(field => !cleanData[field] || cleanData[field] === '');
+
+      if (missingFields.length > 0) {
+        console.error('❌ Missing required fields:', missingFields);
+        missingFields.forEach(field => {
+          setError(field, {
+            type: 'manual',
+            message: `${field.replace('_', ' ')} is required`
+          });
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Additional email validation
+      const emailRegex = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+      if (!emailRegex.test(cleanData.email)) {
+        setError('email', { type: 'manual', message: 'Please enter a valid email address' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Additional username validation
+      if (cleanData.username.length < 3) {
+        setError('username', { type: 'manual', message: 'Username must be at least 3 characters' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(cleanData.username)) {
+        setError('username', { type: 'manual', message: 'Username can only contain letters, numbers, and underscores' });
+        setIsSubmitting(false);
+        return;
+      }
+
+      console.log('✅ All validations passed, sending to API...');
+      console.log('🌐 API URL:', process.env.REACT_APP_API_URL || 'http://localhost:8000');
+
+      // Call registration API
+      const result = await registerUser(cleanData);
+      console.log('📥 API response:', result);
 
       if (result.success) {
+        console.log('✅ Registration successful!');
         navigate('/login', {
           state: {
-            message: 'Account created successfully! Please check your email to verify your account.'
+            message: 'Account created successfully! Please check your email to verify your account.',
+            type: 'success'
           }
         });
       } else if (result.error) {
+        console.error('❌ Registration failed:', result.error);
         const errorMessage = result.error;
-        console.log('Registration error:', errorMessage); // Debug log
 
+        // Map errors to specific fields
         if (errorMessage.toLowerCase().includes('email')) {
           setError('email', { type: 'manual', message: errorMessage });
         } else if (errorMessage.toLowerCase().includes('username')) {
           setError('username', { type: 'manual', message: errorMessage });
         } else if (errorMessage.toLowerCase().includes('password')) {
           setError('password', { type: 'manual', message: errorMessage });
+        } else if (errorMessage.toLowerCase().includes('first_name') || errorMessage.toLowerCase().includes('first name')) {
+          setError('first_name', { type: 'manual', message: errorMessage });
+        } else if (errorMessage.toLowerCase().includes('last_name') || errorMessage.toLowerCase().includes('last name')) {
+          setError('last_name', { type: 'manual', message: errorMessage });
         } else {
           setError('root', { type: 'manual', message: errorMessage });
         }
       }
     } catch (error) {
-      console.error('Registration submission error:', error);
-      setError('root', { type: 'manual', message: 'An unexpected error occurred. Please try again.' });
+      console.error('💥 Unexpected registration error:', error);
+      setError('root', {
+        type: 'manual',
+        message: 'An unexpected error occurred. Please check your internet connection and try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -143,15 +209,14 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-animated relative">
-      {/* Background Animation Elements - Fixed positioning */}
+      {/* Background Animation Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-10 w-20 h-20 bg-blue-500/10 rounded-full animate-float blur-xl"></div>
         <div className="absolute bottom-20 right-10 w-32 h-32 bg-purple-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '1s'}}></div>
         <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-green-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '2s'}}></div>
-        <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-yellow-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '1.5s'}}></div>
       </div>
 
-      {/* Main Content - Higher z-index */}
+      {/* Main Content */}
       <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header */}
         <div className="animate-slide-in">
@@ -183,7 +248,7 @@ const Register = () => {
         {/* Form */}
         <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 card-animated hover-glow">
           <form className="space-y-6 form-animated" onSubmit={handleSubmit(onSubmit)} noValidate>
-            {/* Name Fields */}
+            {/* Name Fields - CRITICAL: Using exact backend field names */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-2">
@@ -201,12 +266,18 @@ const Register = () => {
                   {...register('first_name', {
                     required: 'First name is required',
                     minLength: {
-                      value: 2,
-                      message: 'First name must be at least 2 characters'
+                      value: 1,
+                      message: 'First name is required'
                     },
                     maxLength: {
                       value: 50,
                       message: 'First name must be less than 50 characters'
+                    },
+                    validate: (value) => {
+                      if (!value || value.trim() === '') {
+                        return 'First name is required';
+                      }
+                      return true;
                     }
                   })}
                 />
@@ -234,12 +305,18 @@ const Register = () => {
                   {...register('last_name', {
                     required: 'Last name is required',
                     minLength: {
-                      value: 2,
-                      message: 'Last name must be at least 2 characters'
+                      value: 1,
+                      message: 'Last name is required'
                     },
                     maxLength: {
                       value: 50,
                       message: 'Last name must be less than 50 characters'
+                    },
+                    validate: (value) => {
+                      if (!value || value.trim() === '') {
+                        return 'Last name is required';
+                      }
+                      return true;
                     }
                   })}
                 />
@@ -280,6 +357,12 @@ const Register = () => {
                     pattern: {
                       value: /^[a-zA-Z0-9_]+$/,
                       message: 'Username can only contain letters, numbers, and underscores'
+                    },
+                    validate: (value) => {
+                      if (!value || value.trim() === '') {
+                        return 'Username is required';
+                      }
+                      return true;
                     }
                   })}
                 />
@@ -313,6 +396,12 @@ const Register = () => {
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: 'Please enter a valid email address'
+                    },
+                    validate: (value) => {
+                      if (!value || value.trim() === '') {
+                        return 'Email address is required';
+                      }
+                      return true;
                     }
                   })}
                 />
@@ -446,12 +535,14 @@ const Register = () => {
               </div>
             )}
 
-            {/* Debug Info (remove in production) */}
+            {/* Debug Info (for troubleshooting) */}
             {process.env.NODE_ENV === 'development' && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 bg-slate-700 p-2 rounded">
+                <p>🐛 Debug Info:</p>
                 <p>Form Valid: {isValid ? 'Yes' : 'No'}</p>
                 <p>Password Strength: {passwordStrength}%</p>
-                <p>Errors: {Object.keys(errors).length}</p>
+                <p>Errors Count: {Object.keys(errors).length}</p>
+                <p>API URL: {process.env.REACT_APP_API_URL || 'http://localhost:8000'}</p>
               </div>
             )}
 
@@ -459,10 +550,10 @@ const Register = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading || passwordStrength < 60}
+                disabled={loading || isSubmitting || passwordStrength < 60}
                 className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center btn-animated hover-glow"
               >
-                {loading ? (
+                {loading || isSubmitting ? (
                   <>
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
                     Creating account...
