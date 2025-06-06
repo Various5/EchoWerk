@@ -1,9 +1,10 @@
 # auth_utils.py
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Union
 import secrets
 import json
 import hashlib
+import base64
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 import pyotp
@@ -13,7 +14,7 @@ import redis.asyncio as redis
 from jose import JWTError, jwt
 from fastapi import HTTPException, status
 from email_validator import validate_email, EmailNotValidError
-from backend.database import settings
+from database import settings
 
 # Password hashing with Argon2
 ph = PasswordHasher(

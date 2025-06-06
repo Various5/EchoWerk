@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     app_name: str = "MusicApp"
 
     class Config:
-        env_file = ".env"
+        env_file = "../asd"
 
 
 settings = Settings()

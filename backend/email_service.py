@@ -2,9 +2,9 @@
 import aiosmtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
+from typing import List, Optional
 import logging
-from backend.database import settings
+from database import settings
 
 logger = logging.getLogger(__name__)
 

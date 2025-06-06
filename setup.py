@@ -22,10 +22,10 @@ def run_command(command, description):
 
 def create_env_file():
     """Create .env file from .env.example if it doesn't exist"""
-    if not Path(".env").exists():
+    if not Path("asd").exists():
         if Path(".env.example").exists():
             print("🔄 Creating .env file from .env.example...")
-            with open(".env.example", "r") as example, open(".env", "w") as env:
+            with open(".env.example", "r") as example, open("asd", "w") as env:
                 content = example.read()
                 # Generate a random secret key
                 import secrets
