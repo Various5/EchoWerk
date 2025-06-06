@@ -1,4 +1,4 @@
-// frontend/src/pages/Register.js - Clean Registration
+// frontend/src/pages/Register.js - Fixed Form Validation
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -11,7 +11,9 @@ import {
   User,
   AlertCircle,
   CheckCircle,
-  Music
+  Music,
+  Shield,
+  Zap
 } from 'lucide-react';
 
 const Register = () => {
@@ -24,11 +26,22 @@ const Register = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     watch,
     setError,
-    clearErrors
-  } = useForm();
+    clearErrors,
+    trigger
+  } = useForm({
+    mode: 'onChange', // Enable real-time validation
+    defaultValues: {
+      first_name: '',
+      last_name: '',
+      username: '',
+      email: '',
+      password: '',
+      confirmPassword: ''
+    }
+  });
 
   const password = watch('password', '');
   const confirmPassword = watch('confirmPassword', '');
@@ -71,35 +84,56 @@ const Register = () => {
   };
 
   const validatePassword = (value) => {
-    const errors = [];
-    if (value.length < 8) errors.push('at least 8 characters');
-    if (!/[a-z]/.test(value)) errors.push('one lowercase letter');
-    if (!/[A-Z]/.test(value)) errors.push('one uppercase letter');
-    if (!/\d/.test(value)) errors.push('one number');
-    if (!/[^a-zA-Z\d]/.test(value)) errors.push('one special character');
-    return errors.length === 0 || `Password must contain ${errors.join(', ')}`;
+    if (!value) return 'Password is required';
+    if (value.length < 8) return 'Password must be at least 8 characters';
+    if (!/[a-z]/.test(value)) return 'Password must contain at least one lowercase letter';
+    if (!/[A-Z]/.test(value)) return 'Password must contain at least one uppercase letter';
+    if (!/\d/.test(value)) return 'Password must contain at least one number';
+    if (!/[^a-zA-Z\d]/.test(value)) return 'Password must contain at least one special character';
+    return true;
   };
 
   const onSubmit = async (data) => {
+    console.log('Form submitted with data:', data); // Debug log
     clearErrors();
 
-    const { confirmPassword, ...submitData } = data;
-    const result = await registerUser(submitData);
-
-    if (result.success) {
-      navigate('/login', {
-        state: {
-          message: 'Account created successfully! Please check your email to verify your account.'
-        }
-      });
-    } else if (result.error) {
-      if (result.error.includes('email')) {
-        setError('email', { message: result.error });
-      } else if (result.error.includes('username')) {
-        setError('username', { message: result.error });
-      } else {
-        setError('general', { message: result.error });
+    try {
+      // Validate all fields before submission
+      const isFormValid = await trigger();
+      if (!isFormValid) {
+        console.log('Form validation failed:', errors);
+        return;
       }
+
+      const { confirmPassword: _, ...submitData } = data;
+      console.log('Submitting data to API:', submitData); // Debug log
+
+      const result = await registerUser(submitData);
+      console.log('API response:', result); // Debug log
+
+      if (result.success) {
+        navigate('/login', {
+          state: {
+            message: 'Account created successfully! Please check your email to verify your account.'
+          }
+        });
+      } else if (result.error) {
+        const errorMessage = result.error;
+        console.log('Registration error:', errorMessage); // Debug log
+
+        if (errorMessage.toLowerCase().includes('email')) {
+          setError('email', { type: 'manual', message: errorMessage });
+        } else if (errorMessage.toLowerCase().includes('username')) {
+          setError('username', { type: 'manual', message: errorMessage });
+        } else if (errorMessage.toLowerCase().includes('password')) {
+          setError('password', { type: 'manual', message: errorMessage });
+        } else {
+          setError('root', { type: 'manual', message: errorMessage });
+        }
+      }
+    } catch (error) {
+      console.error('Registration submission error:', error);
+      setError('root', { type: 'manual', message: 'An unexpected error occurred. Please try again.' });
     }
   };
 
@@ -108,19 +142,28 @@ const Register = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-animated relative">
+      {/* Background Animation Elements - Fixed positioning */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-20 left-10 w-20 h-20 bg-blue-500/10 rounded-full animate-float blur-xl"></div>
+        <div className="absolute bottom-20 right-10 w-32 h-32 bg-purple-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '1s'}}></div>
+        <div className="absolute top-1/2 left-1/4 w-16 h-16 bg-green-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/3 right-1/3 w-24 h-24 bg-yellow-500/10 rounded-full animate-float blur-xl" style={{animationDelay: '1.5s'}}></div>
+      </div>
+
+      {/* Main Content - Higher z-index */}
+      <div className="max-w-md w-full space-y-8 relative z-10">
         {/* Header */}
-        <div>
+        <div className="animate-slide-in">
           <div className="flex justify-center">
             <Link
               to="/"
-              className="flex items-center text-white hover:text-blue-400 transition-colors"
+              className="flex items-center text-white hover:text-blue-400 transition-colors hover-lift"
             >
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3 logo-animated">
                 <Music className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold">EchoWerk</span>
+              <span className="text-2xl font-bold text-gradient-animated">EchoWerk</span>
             </Link>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold text-white">
@@ -130,7 +173,7 @@ const Register = () => {
             Already have an account?{' '}
             <Link
               to="/login"
-              className="text-blue-400 hover:text-blue-300 font-medium"
+              className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
             >
               Sign in
             </Link>
@@ -138,8 +181,8 @@ const Register = () => {
         </div>
 
         {/* Form */}
-        <div className="bg-slate-800 border border-slate-700 rounded-lg p-8">
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 card-animated hover-glow">
+          <form className="space-y-6 form-animated" onSubmit={handleSubmit(onSubmit)} noValidate>
             {/* Name Fields */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -148,22 +191,30 @@ const Register = () => {
                 </label>
                 <input
                   id="first_name"
+                  name="first_name"
                   type="text"
                   autoComplete="given-name"
                   className={`w-full px-3 py-2 bg-slate-700 border ${
                     errors.first_name ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="First name"
                   {...register('first_name', {
                     required: 'First name is required',
                     minLength: {
                       value: 2,
-                      message: 'Minimum 2 characters required'
+                      message: 'First name must be at least 2 characters'
+                    },
+                    maxLength: {
+                      value: 50,
+                      message: 'First name must be less than 50 characters'
                     }
                   })}
                 />
                 {errors.first_name && (
-                  <p className="mt-1 text-xs text-red-400">{errors.first_name.message}</p>
+                  <p className="mt-1 text-xs text-red-400 animate-slide-in flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {errors.first_name.message}
+                  </p>
                 )}
               </div>
 
@@ -173,22 +224,30 @@ const Register = () => {
                 </label>
                 <input
                   id="last_name"
+                  name="last_name"
                   type="text"
                   autoComplete="family-name"
                   className={`w-full px-3 py-2 bg-slate-700 border ${
                     errors.last_name ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="Last name"
                   {...register('last_name', {
                     required: 'Last name is required',
                     minLength: {
                       value: 2,
-                      message: 'Minimum 2 characters required'
+                      message: 'Last name must be at least 2 characters'
+                    },
+                    maxLength: {
+                      value: 50,
+                      message: 'Last name must be less than 50 characters'
                     }
                   })}
                 />
                 {errors.last_name && (
-                  <p className="mt-1 text-xs text-red-400">{errors.last_name.message}</p>
+                  <p className="mt-1 text-xs text-red-400 animate-slide-in flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    {errors.last_name.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -201,28 +260,33 @@ const Register = () => {
               <div className="relative">
                 <input
                   id="username"
+                  name="username"
                   type="text"
                   autoComplete="username"
                   className={`w-full px-3 py-2 pl-10 bg-slate-700 border ${
                     errors.username ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="Choose a username"
                   {...register('username', {
                     required: 'Username is required',
                     minLength: {
                       value: 3,
-                      message: 'Minimum 3 characters required'
+                      message: 'Username must be at least 3 characters'
+                    },
+                    maxLength: {
+                      value: 30,
+                      message: 'Username must be less than 30 characters'
                     },
                     pattern: {
                       value: /^[a-zA-Z0-9_]+$/,
-                      message: 'Only letters, numbers, and underscores allowed'
+                      message: 'Username can only contain letters, numbers, and underscores'
                     }
                   })}
                 />
                 <User className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
               {errors.username && (
-                <p className="mt-1 text-sm text-red-400 flex items-center">
+                <p className="mt-1 text-sm text-red-400 flex items-center animate-slide-in">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.username.message}
                 </p>
@@ -237,16 +301,17 @@ const Register = () => {
               <div className="relative">
                 <input
                   id="email"
+                  name="email"
                   type="email"
                   autoComplete="email"
                   className={`w-full px-3 py-2 pl-10 bg-slate-700 border ${
                     errors.email ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="Enter your email"
                   {...register('email', {
-                    required: 'Email is required',
+                    required: 'Email address is required',
                     pattern: {
-                      value: /^\S+@\S+$/i,
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
                       message: 'Please enter a valid email address'
                     }
                   })}
@@ -254,7 +319,7 @@ const Register = () => {
                 <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
               {errors.email && (
-                <p className="mt-1 text-sm text-red-400 flex items-center">
+                <p className="mt-1 text-sm text-red-400 flex items-center animate-slide-in">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.email.message}
                 </p>
@@ -269,11 +334,12 @@ const Register = () => {
               <div className="relative">
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className={`w-full px-3 py-2 pl-10 pr-10 bg-slate-700 border ${
                     errors.password ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="Create a password"
                   {...register('password', {
                     required: 'Password is required',
@@ -283,7 +349,7 @@ const Register = () => {
                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <button
                   type="button"
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300"
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300 transition-colors"
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -292,7 +358,7 @@ const Register = () => {
 
               {/* Password Strength Indicator */}
               {password && (
-                <div className="mt-2">
+                <div className="mt-2 animate-slide-in">
                   <div className="flex justify-between items-center mb-1">
                     <span className="text-xs text-gray-400">Password Strength</span>
                     <span className="text-xs text-gray-300">{getPasswordStrengthText()}</span>
@@ -307,7 +373,7 @@ const Register = () => {
               )}
 
               {errors.password && (
-                <p className="mt-1 text-sm text-red-400 flex items-center">
+                <p className="mt-1 text-sm text-red-400 flex items-center animate-slide-in">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.password.message}
                 </p>
@@ -322,11 +388,12 @@ const Register = () => {
               <div className="relative">
                 <input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete="new-password"
                   className={`w-full px-3 py-2 pl-10 pr-10 bg-slate-700 border ${
                     errors.confirmPassword ? 'border-red-500' : 'border-slate-600'
-                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent form-input-animated`}
                   placeholder="Confirm your password"
                   {...register('confirmPassword', {
                     required: 'Please confirm your password',
@@ -337,7 +404,7 @@ const Register = () => {
                 <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
                 <button
                   type="button"
-                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300"
+                  className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300 transition-colors"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                 >
                   {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -346,10 +413,10 @@ const Register = () => {
 
               {/* Password Match Indicator */}
               {confirmPassword && (
-                <div className="flex items-center mt-1 text-sm">
+                <div className="flex items-center mt-1 text-sm animate-slide-in">
                   {confirmPassword === password ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-green-400 mr-1" />
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-1 animate-pulse" />
                       <span className="text-green-400">Passwords match</span>
                     </>
                   ) : (
@@ -362,7 +429,7 @@ const Register = () => {
               )}
 
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-400 flex items-center">
+                <p className="mt-1 text-sm text-red-400 flex items-center animate-slide-in">
                   <AlertCircle className="w-4 h-4 mr-1" />
                   {errors.confirmPassword.message}
                 </p>
@@ -370,12 +437,21 @@ const Register = () => {
             </div>
 
             {/* General Error */}
-            {errors.general && (
-              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+            {errors.root && (
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3 animate-slide-in">
                 <p className="text-sm text-red-400 flex items-center">
                   <AlertCircle className="w-4 h-4 mr-2" />
-                  {errors.general.message}
+                  {errors.root.message}
                 </p>
+              </div>
+            )}
+
+            {/* Debug Info (remove in production) */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-xs text-gray-500">
+                <p>Form Valid: {isValid ? 'Yes' : 'No'}</p>
+                <p>Password Strength: {passwordStrength}%</p>
+                <p>Errors: {Object.keys(errors).length}</p>
               </div>
             )}
 
@@ -384,7 +460,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={loading || passwordStrength < 60}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center btn-animated hover-glow"
               >
                 {loading ? (
                   <>
@@ -392,16 +468,45 @@ const Register = () => {
                     Creating account...
                   </>
                 ) : (
-                  'Create Account'
+                  <>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Create Account
+                  </>
                 )}
               </button>
               {passwordStrength < 60 && password && (
-                <p className="text-xs text-yellow-400 mt-2 text-center">
+                <p className="text-xs text-yellow-400 mt-2 text-center animate-pulse">
                   Please create a stronger password to continue
                 </p>
               )}
             </div>
           </form>
+        </div>
+
+        {/* Security Features */}
+        <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-4 animate-fade-in">
+          <div className="flex items-center justify-center mb-3">
+            <Shield className="w-5 h-5 text-green-400 mr-2 animate-pulse" />
+            <span className="text-sm font-medium text-green-400">Secured by EchoWerk</span>
+          </div>
+          <div className="grid grid-cols-2 gap-4 text-center text-xs text-gray-400">
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-400 mr-1" />
+              Email Verification
+            </div>
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-400 mr-1" />
+              2FA Support
+            </div>
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-400 mr-1" />
+              Encrypted Storage
+            </div>
+            <div className="flex items-center">
+              <CheckCircle className="w-3 h-3 text-green-400 mr-1" />
+              Rate Limiting
+            </div>
+          </div>
         </div>
       </div>
     </div>
