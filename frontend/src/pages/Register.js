@@ -1,20 +1,23 @@
-// src/pages/Register.js - Clean Professional Registration
+// frontend/src/pages/Register.js - Modern Registration with Effects
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { useAuth } from '../contexts/AuthContext';
+import ParticleBackground from '../components/ParticleBackground';
 import {
   Eye,
   EyeOff,
   Mail,
   Lock,
   User,
-  UserCheck,
+  UserPlus,
   AlertCircle,
-  Check,
-  X,
+  CheckCircle,
   ArrowRight,
-  Shield
+  Shield,
+  Sparkles,
+  Zap,
+  Star
 } from 'lucide-react';
 
 const Register = () => {
@@ -23,6 +26,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -35,6 +39,10 @@ const Register = () => {
 
   const password = watch('password', '');
   const confirmPassword = watch('confirmPassword', '');
+  const email = watch('email', '');
+  const firstName = watch('first_name', '');
+  const lastName = watch('last_name', '');
+  const username = watch('username', '');
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -47,67 +55,62 @@ const Register = () => {
   useEffect(() => {
     const calculateStrength = (pwd) => {
       let strength = 0;
-
       if (pwd.length >= 8) strength += 20;
-      if (pwd.length >= 12) strength += 10;
+      if (pwd.length >= 12) strength += 15;
       if (/[a-z]/.test(pwd)) strength += 15;
       if (/[A-Z]/.test(pwd)) strength += 15;
       if (/\d/.test(pwd)) strength += 15;
-      if (/[^a-zA-Z\d]/.test(pwd)) strength += 20;
+      if (/[^a-zA-Z\d]/.test(pwd)) strength += 15;
       if (pwd.length >= 16) strength += 5;
-
       return Math.min(strength, 100);
     };
 
     setPasswordStrength(calculateStrength(password));
   }, [password]);
 
-  const getPasswordStrengthColor = (strength) => {
-    if (strength >= 80) return 'from-green-400 to-emerald-500';
-    if (strength >= 60) return 'from-yellow-400 to-orange-500';
-    if (strength >= 40) return 'from-orange-400 to-red-500';
-    return 'from-red-500 to-red-600';
-  };
-
-  const getPasswordStrengthText = (strength) => {
-    if (strength >= 80) return 'Very Strong';
-    if (strength >= 60) return 'Strong';
-    if (strength >= 40) return 'Medium';
-    if (strength >= 20) return 'Weak';
-    return 'Very Weak';
+  const getPasswordStrengthInfo = (strength) => {
+    if (strength >= 80) return { level: 'Excellent', color: 'from-green-400 to-emerald-500', textColor: 'text-green-400' };
+    if (strength >= 60) return { level: 'Strong', color: 'from-blue-400 to-cyan-500', textColor: 'text-blue-400' };
+    if (strength >= 40) return { level: 'Medium', color: 'from-yellow-400 to-orange-500', textColor: 'text-yellow-400' };
+    if (strength >= 20) return { level: 'Weak', color: 'from-orange-400 to-red-500', textColor: 'text-orange-400' };
+    return { level: 'Very Weak', color: 'from-red-500 to-red-600', textColor: 'text-red-400' };
   };
 
   const validatePassword = (value) => {
     const errors = [];
-    if (value.length < 8) errors.push('Minimum 8 characters');
+    if (value.length < 8) errors.push('At least 8 characters');
     if (!/[a-z]/.test(value)) errors.push('Lowercase letter');
     if (!/[A-Z]/.test(value)) errors.push('Uppercase letter');
     if (!/\d/.test(value)) errors.push('Number');
     if (!/[^a-zA-Z\d]/.test(value)) errors.push('Special character');
-
     return errors.length === 0 || `Missing: ${errors.join(', ')}`;
   };
 
   const onSubmit = async (data) => {
     clearErrors();
+    setIsSubmitting(true);
 
-    const { confirmPassword, ...submitData } = data;
-    const result = await registerUser(submitData);
+    try {
+      const { confirmPassword, ...submitData } = data;
+      const result = await registerUser(submitData);
 
-    if (result.success) {
-      navigate('/login', {
-        state: {
-          message: 'Account created successfully! Please check your email to verify your account.'
+      if (result.success) {
+        navigate('/login', {
+          state: {
+            message: 'Account created successfully! Please check your email to verify your account.'
+          }
+        });
+      } else if (result.error) {
+        if (result.error.includes('email')) {
+          setError('email', { message: result.error });
+        } else if (result.error.includes('username')) {
+          setError('username', { message: result.error });
+        } else {
+          setError('email', { message: result.error });
         }
-      });
-    } else if (result.error) {
-      if (result.error.includes('email')) {
-        setError('email', { message: result.error });
-      } else if (result.error.includes('username')) {
-        setError('username', { message: result.error });
-      } else {
-        setError('email', { message: result.error });
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -115,40 +118,55 @@ const Register = () => {
     return null;
   }
 
+  const strengthInfo = getPasswordStrengthInfo(passwordStrength);
+
   return (
     <div className="auth-container">
-      {/* Main Registration Card */}
-      <div className="glass-card auth-card">
+      {/* Interactive Background */}
+      <ParticleBackground
+        particleCount={35}
+        connectionDistance={100}
+        particleColor="rgba(139, 92, 246, 0.5)"
+        lineColor="rgba(139, 92, 246, 0.2)"
+        speed={0.4}
+        interactive={true}
+      />
+
+      {/* Registration Card */}
+      <div className="glass-card auth-card animate-slideUp">
         {/* Header */}
         <div className="auth-header">
-          <div className="flex items-center justify-center mb-4">
+          <div className="flex items-center justify-center mb-6">
             <div className="relative">
-              <div className="w-16 h-16 rounded-full bg-gradient-accent flex items-center justify-center">
-                <User className="w-8 h-8 text-white" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-2xl">
+                <UserPlus className="w-8 h-8 text-white" />
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center animate-pulse">
+                <Sparkles className="w-3 h-3 text-white" />
               </div>
             </div>
           </div>
 
-          <h1 className="auth-title">Create Your Account</h1>
+          <h1 className="auth-title">Join Our Community</h1>
           <p className="auth-subtitle">
-            Join us today and get started with your music journey
+            Create your account and start your musical journey with enhanced security and premium features
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Personal Information */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="form-group">
-                <label htmlFor="firstName" className="form-label">
-                  <User className="w-4 h-4" />
-                  <span>First Name</span>
-                </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="form-group">
+              <label htmlFor="firstName" className="form-label">
+                <User className="w-4 h-4" />
+                <span>First Name</span>
+              </label>
+              <div className="input-with-icon">
                 <input
                   type="text"
                   id="firstName"
-                  className={`form-input ${errors.first_name ? 'border-red-500' : ''}`}
+                  className={`form-input ${errors.first_name ? 'border-red-500' : firstName ? 'border-green-500/50' : ''}`}
                   placeholder="Your first name"
                   {...register('first_name', {
                     required: 'First name is required',
@@ -158,23 +176,31 @@ const Register = () => {
                     }
                   })}
                 />
-                {errors.first_name && (
-                  <div className="form-error">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.first_name.message}
+                <User className="input-icon" />
+                {firstName && !errors.first_name && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                 )}
               </div>
+              {errors.first_name && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.first_name.message}
+                </div>
+              )}
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="lastName" className="form-label">
-                  <User className="w-4 h-4" />
-                  <span>Last Name</span>
-                </label>
+            <div className="form-group">
+              <label htmlFor="lastName" className="form-label">
+                <User className="w-4 h-4" />
+                <span>Last Name</span>
+              </label>
+              <div className="input-with-icon">
                 <input
                   type="text"
                   id="lastName"
-                  className={`form-input ${errors.last_name ? 'border-red-500' : ''}`}
+                  className={`form-input ${errors.last_name ? 'border-red-500' : lastName ? 'border-green-500/50' : ''}`}
                   placeholder="Your last name"
                   {...register('last_name', {
                     required: 'Last name is required',
@@ -184,28 +210,34 @@ const Register = () => {
                     }
                   })}
                 />
-                {errors.last_name && (
-                  <div className="form-error">
-                    <AlertCircle className="w-4 h-4" />
-                    {errors.last_name.message}
+                <User className="input-icon" />
+                {lastName && !errors.last_name && (
+                  <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                    <CheckCircle className="w-4 h-4 text-green-500" />
                   </div>
                 )}
               </div>
+              {errors.last_name && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.last_name.message}
+                </div>
+              )}
             </div>
           </div>
 
           {/* Username */}
           <div className="form-group">
             <label htmlFor="username" className="form-label">
-              <UserCheck className="w-4 h-4" />
+              <Zap className="w-4 h-4" />
               <span>Username</span>
             </label>
-            <div className="relative">
+            <div className="input-with-icon">
               <input
                 type="text"
                 id="username"
-                className={`form-input pl-12 ${errors.username ? 'border-red-500' : ''}`}
-                placeholder="Choose a username"
+                className={`form-input ${errors.username ? 'border-red-500' : username && username.length >= 3 ? 'border-green-500/50' : ''}`}
+                placeholder="Choose a unique username"
                 {...register('username', {
                   required: 'Username is required',
                   minLength: {
@@ -218,14 +250,23 @@ const Register = () => {
                   }
                 })}
               />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                <UserCheck className="w-4 h-4 text-gray-400" />
-              </div>
+              <Zap className="input-icon" />
+              {username && !errors.username && username.length >= 3 && (
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                </div>
+              )}
             </div>
             {errors.username && (
               <div className="form-error">
                 <AlertCircle className="w-4 h-4" />
                 {errors.username.message}
+              </div>
+            )}
+            {username && username.length >= 3 && !errors.username && (
+              <div className="form-success">
+                <CheckCircle className="w-4 h-4" />
+                Username looks good!
               </div>
             )}
           </div>
@@ -236,11 +277,11 @@ const Register = () => {
               <Mail className="w-4 h-4" />
               <span>Email Address</span>
             </label>
-            <div className="relative">
+            <div className="input-with-icon">
               <input
                 type="email"
                 id="email"
-                className={`form-input pl-12 ${errors.email ? 'border-red-500' : ''}`}
+                className={`form-input ${errors.email ? 'border-red-500' : email && email.includes('@') ? 'border-green-500/50' : ''}`}
                 placeholder="your@email.com"
                 {...register('email', {
                   required: 'Email is required',
@@ -250,9 +291,12 @@ const Register = () => {
                   }
                 })}
               />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                <Mail className="w-4 h-4 text-gray-400" />
-              </div>
+              <Mail className="input-icon" />
+              {email && !errors.email && email.includes('@') && (
+                <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                  <CheckCircle className="w-4 h-4 text-green-500" />
+                </div>
+              )}
             </div>
             {errors.email && (
               <div className="form-error">
@@ -268,23 +312,21 @@ const Register = () => {
               <Lock className="w-4 h-4" />
               <span>Password</span>
             </label>
-            <div className="relative">
+            <div className="input-with-icon">
               <input
                 type={showPassword ? 'text' : 'password'}
                 id="password"
-                className={`form-input pl-12 pr-12 ${errors.password ? 'border-red-500' : ''}`}
+                className={`form-input ${errors.password ? 'border-red-500' : passwordStrength >= 60 ? 'border-green-500/50' : ''}`}
                 placeholder="Create a strong password"
                 {...register('password', {
                   required: 'Password is required',
                   validate: validatePassword
                 })}
               />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                <Lock className="w-4 h-4 text-gray-400" />
-              </div>
+              <Lock className="input-icon" />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-neon-blue transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors z-10"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -296,16 +338,22 @@ const Register = () => {
               <div className="mt-3 space-y-2">
                 <div className="flex justify-between items-center">
                   <span className="text-xs text-gray-400">Password Strength</span>
-                  <span className={`text-xs font-bold ${passwordStrength >= 80 ? 'text-green-400' : passwordStrength >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
-                    {getPasswordStrengthText(passwordStrength)}
+                  <span className={`text-xs font-bold ${strengthInfo.textColor}`}>
+                    {strengthInfo.level}
                   </span>
                 </div>
                 <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
                   <div
-                    className={`h-full bg-gradient-to-r ${getPasswordStrengthColor(passwordStrength)} transition-all duration-500`}
+                    className={`h-full bg-gradient-to-r ${strengthInfo.color} transition-all duration-500 relative`}
                     style={{ width: `${passwordStrength}%` }}
                   >
+                    <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
                   </div>
+                </div>
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Weak</span>
+                  <span>Strong</span>
+                  <span>Excellent</span>
                 </div>
               </div>
             )}
@@ -321,14 +369,14 @@ const Register = () => {
           {/* Confirm Password */}
           <div className="form-group">
             <label htmlFor="confirmPassword" className="form-label">
-              <Lock className="w-4 h-4" />
+              <Shield className="w-4 h-4" />
               <span>Confirm Password</span>
             </label>
-            <div className="relative">
+            <div className="input-with-icon">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
-                className={`form-input pl-12 pr-12 ${errors.confirmPassword ? 'border-red-500' : ''}`}
+                className={`form-input ${errors.confirmPassword ? 'border-red-500' : confirmPassword && confirmPassword === password ? 'border-green-500/50' : ''}`}
                 placeholder="Confirm your password"
                 {...register('confirmPassword', {
                   required: 'Please confirm your password',
@@ -336,12 +384,10 @@ const Register = () => {
                     value === password || 'Passwords do not match'
                 })}
               />
-              <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
-                <Lock className="w-4 h-4 text-gray-400" />
-              </div>
+              <Shield className="input-icon" />
               <button
                 type="button"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-neon-blue transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-blue-400 transition-colors z-10"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -353,12 +399,12 @@ const Register = () => {
               <div className="flex items-center mt-2 text-sm">
                 {confirmPassword === password ? (
                   <>
-                    <Check className="w-4 h-4 text-green-400 mr-2" />
-                    <span className="text-green-400">Passwords match</span>
+                    <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
+                    <span className="text-green-400">Passwords match perfectly</span>
                   </>
                 ) : (
                   <>
-                    <X className="w-4 h-4 text-red-400 mr-2" />
+                    <AlertCircle className="w-4 h-4 text-red-400 mr-2" />
                     <span className="text-red-400">Passwords do not match</span>
                   </>
                 )}
@@ -377,41 +423,48 @@ const Register = () => {
           <div className="form-group pt-4">
             <button
               type="submit"
-              disabled={loading || passwordStrength < 60}
+              disabled={loading || isSubmitting || passwordStrength < 60}
               className="btn btn-primary w-full group relative overflow-hidden"
             >
               <div className="flex items-center justify-center relative z-10">
-                {loading ? (
+                {loading || isSubmitting ? (
                   <>
                     <div className="spinner mr-2"></div>
                     <span>Creating account...</span>
                   </>
                 ) : (
                   <>
+                    <UserPlus className="w-4 h-4 mr-2" />
                     <span>Create Account</span>
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}
               </div>
             </button>
+
+            {passwordStrength < 60 && password && (
+              <p className="text-xs text-yellow-400 mt-2 text-center">
+                Please create a stronger password to continue
+              </p>
+            )}
           </div>
 
-          {/* Terms */}
-          <div className="text-center p-4 bg-gradient-to-r from-gray-900/20 to-gray-800/20 rounded-lg border border-gray-700/50">
+          {/* Terms & Privacy */}
+          <div className="glass rounded-xl p-4 text-center">
             <p className="text-xs text-gray-400 mb-2">
               By creating an account, you agree to our
             </p>
             <div className="flex justify-center space-x-4 text-xs">
               <Link
                 to="/terms"
-                className="text-neon-blue hover:text-neon-purple transition-colors underline"
+                className="text-blue-400 hover:text-blue-300 transition-colors underline"
               >
                 Terms of Service
               </Link>
               <span className="text-gray-600">•</span>
               <Link
                 to="/privacy"
-                className="text-neon-blue hover:text-neon-purple transition-colors underline"
+                className="text-blue-400 hover:text-blue-300 transition-colors underline"
               >
                 Privacy Policy
               </Link>
@@ -424,7 +477,7 @@ const Register = () => {
           <div className="text-center">
             <p className="text-gray-400 mb-4">
               Already have an account?{' '}
-              <Link to="/login" className="text-neon-blue hover:text-neon-purple font-medium transition-colors inline-flex items-center group">
+              <Link to="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors inline-flex items-center group">
                 Sign In
                 <ArrowRight className="w-3 h-3 ml-1 group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -434,15 +487,26 @@ const Register = () => {
             <div className="flex items-center justify-center space-x-6 text-xs text-gray-500">
               <span className="flex items-center">
                 <Shield className="w-3 h-3 mr-1" />
-                Secuare
+                Secure
               </span>
               <span className="flex items-center">
                 <Lock className="w-3 h-3 mr-1" />
                 Encrypted
               </span>
+              <span className="flex items-center">
+                <Star className="w-3 h-3 mr-1" />
+                Trusted
+              </span>
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Background Effects */}
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-32 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-float"></div>
+        <div className="absolute -bottom-40 -left-32 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-float" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/3 right-1/3 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-5 animate-pulse"></div>
       </div>
     </div>
   );

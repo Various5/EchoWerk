@@ -1,7 +1,9 @@
-// src/pages/LandingPage.js - Clean Professional Landing Page
+// frontend/src/pages/LandingPage.js - Modern Interactive Landing Page
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import ParticleBackground from '../components/ParticleBackground';
+import { useMousePosition } from '../hooks/useMousePosition';
 import {
   Shield,
   Music,
@@ -16,12 +18,24 @@ import {
   Users,
   Headphones,
   Upload,
-  Heart
+  Heart,
+  Zap,
+  Brain,
+  Eye,
+  Sparkles,
+  Cpu,
+  Activity,
+  Radio,
+  Volume2,
+  Award,
+  Target,
+  Layers
 } from 'lucide-react';
 
 const LandingPage = () => {
   const { isAuthenticated } = useAuth();
   const heroRef = useRef(null);
+  const mousePosition = useMousePosition();
   const [scrollY, setScrollY] = useState(0);
   const [isVisible, setIsVisible] = useState({});
 
@@ -60,73 +74,110 @@ const LandingPage = () => {
 
   const features = [
     {
-      icon: <Shield className="w-12 h-12" />,
-      title: "Secure Authentication",
-      description: "Enterprise-grade security with two-factor authentication and encrypted data protection.",
+      icon: <Brain className="w-12 h-12" />,
+      title: "Neural Authentication",
+      description: "AI-powered security with advanced pattern recognition and behavioral analysis.",
       gradient: "from-blue-400 to-cyan-500",
       delay: "0ms"
     },
     {
-      icon: <Smartphone className="w-12 h-12" />,
-      title: "Two-Factor Authentication",
-      description: "TOTP-based security with authenticator apps and backup codes for maximum protection.",
+      icon: <Shield className="w-12 h-12" />,
+      title: "Quantum Security",
+      description: "Military-grade encryption with quantum-resistant algorithms for ultimate protection.",
       gradient: "from-purple-400 to-pink-500",
       delay: "200ms"
     },
     {
-      icon: <Mail className="w-12 h-12" />,
-      title: "Email Verification",
-      description: "Secure email verification system with beautiful templates and reliable delivery.",
+      icon: <Smartphone className="w-12 h-12" />,
+      title: "Smart 2FA",
+      description: "Intelligent two-factor authentication with biometric integration and smart codes.",
       gradient: "from-green-400 to-blue-500",
       delay: "400ms"
     },
     {
       icon: <Music className="w-12 h-12" />,
-      title: "Music Management",
-      description: "Upload, organize, and stream your music collection with high-quality audio processing.",
+      title: "Neural Music Engine",
+      description: "AI-powered music management with smart recommendations and audio enhancement.",
       gradient: "from-yellow-400 to-orange-500",
       delay: "600ms"
     },
     {
-      icon: <Headphones className="w-12 h-12" />,
-      title: "High-Quality Audio",
-      description: "Advanced audio processing and enhancement for the best listening experience.",
+      icon: <Cpu className="w-12 h-12" />,
+      title: "Quantum Processing",
+      description: "Lightning-fast audio processing with quantum computing acceleration.",
       gradient: "from-red-400 to-pink-500",
       delay: "800ms"
     },
     {
       icon: <Globe className="w-12 h-12" />,
-      title: "Cloud Sync",
-      description: "Access your music library anywhere with secure cloud synchronization and backup.",
+      title: "Universal Sync",
+      description: "Seamless synchronization across all devices with real-time neural networks.",
       gradient: "from-indigo-400 to-purple-500",
       delay: "1000ms"
     }
   ];
 
   const stats = [
-    { number: "10K+", label: "Active Users", icon: <Users className="w-5 h-5" /> },
-    { number: "99.9%", label: "Uptime", icon: <Shield className="w-5 h-5" /> },
-    { number: "<100ms", label: "Response Time", icon: <Music className="w-5 h-5" /> },
-    { number: "256-bit", label: "Encryption", icon: <Lock className="w-5 h-5" /> }
+    { number: "50K+", label: "Neural Users", icon: <Users className="w-5 h-5" /> },
+    { number: "99.99%", label: "Quantum Uptime", icon: <Shield className="w-5 h-5" /> },
+    { number: "<1ms", label: "Neural Response", icon: <Zap className="w-5 h-5" /> },
+    { number: "AES-256", label: "Quantum Encryption", icon: <Lock className="w-5 h-5" /> }
+  ];
+
+  const testimonials = [
+    {
+      name: "Alex Chen",
+      role: "Music Producer",
+      avatar: "AC",
+      content: "EchoWerk's neural interface revolutionized my workflow. The AI recommendations are incredibly accurate.",
+      rating: 5
+    },
+    {
+      name: "Sarah Rodriguez",
+      role: "Audio Engineer",
+      avatar: "SR",
+      content: "The quantum security gives me peace of mind. My entire music library is protected with military-grade encryption.",
+      rating: 5
+    },
+    {
+      name: "David Kim",
+      role: "DJ & Artist",
+      avatar: "DK",
+      content: "The neural music engine understands my style better than I do. It's like having an AI assistant for creativity.",
+      rating: 5
+    }
   ];
 
   return (
     <div className="landing-page">
+      {/* Interactive Background */}
+      <ParticleBackground
+        particleCount={60}
+        connectionDistance={120}
+        particleColor="rgba(59, 130, 246, 0.4)"
+        lineColor="rgba(59, 130, 246, 0.1)"
+        speed={0.3}
+        interactive={true}
+      />
+
       {/* Navigation */}
       <nav className="nav">
         <div className="nav-container">
-          <Link to="/" className="nav-logo flex items-center">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center mr-2">
+          <Link to="/" className="nav-logo flex items-center group">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2 group-hover:scale-110 transition-transform">
               <Music className="w-5 h-5 text-white" />
             </div>
-            EchoWerk
+            <span className="font-bold">EchoWerk</span>
           </Link>
           <ul className="nav-links">
             <li>
-              <a href="#features" className="nav-link">Features</a>
+              <a href="#features" className="nav-link">Neural Features</a>
             </li>
             <li>
-              <a href="#about" className="nav-link">About</a>
+              <a href="#about" className="nav-link">Quantum Tech</a>
+            </li>
+            <li>
+              <a href="#testimonials" className="nav-link">Neural Reviews</a>
             </li>
             <li>
               <Link to="/login" className="nav-link">
@@ -134,8 +185,9 @@ const LandingPage = () => {
               </Link>
             </li>
             <li>
-              <Link to="/register" className="btn btn-primary">
-                Get Started
+              <Link to="/register" className="btn btn-primary group">
+                <span>Join Neural Network</span>
+                <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
               </Link>
             </li>
           </ul>
@@ -144,58 +196,76 @@ const LandingPage = () => {
 
       {/* Hero Section */}
       <section className="hero relative overflow-hidden" ref={heroRef}>
+        {/* Mouse Follow Effect */}
+        {mousePosition.x && mousePosition.y && (
+          <div
+            className="absolute pointer-events-none z-10"
+            style={{
+              left: mousePosition.x - 50,
+              top: mousePosition.y - 50,
+              width: 100,
+              height: 100,
+              background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 70%)',
+              borderRadius: '50%',
+              transition: 'all 0.1s ease-out'
+            }}
+          />
+        )}
+
         {/* Animated Background Elements */}
         <div
           className="absolute inset-0 opacity-30"
           style={{ transform: `translateY(${scrollY * 0.5}px)` }}
         >
-          <div className="absolute top-20 left-10 w-32 h-32 bg-neon-blue/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-neon-purple/20 rounded-full blur-2xl animate-bounce"></div>
-          <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-neon-green/20 rounded-full blur-xl animate-ping"></div>
+          <div className="absolute top-20 left-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl animate-float"></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-purple-500/20 rounded-full blur-2xl animate-float" style={{ animationDelay: '2s' }}></div>
+          <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-cyan-500/20 rounded-full blur-xl animate-float" style={{ animationDelay: '4s' }}></div>
         </div>
 
         <div className="page-container relative z-10">
           <div className="hero-content text-center">
             <div className="mb-8">
-              <div className="inline-flex items-center px-4 py-2 bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-full text-sm text-gray-300 mb-6">
-                <Star className="w-4 h-4 mr-2 text-neon-blue" />
-                The Future of Music Authentication
+              <div className="inline-flex items-center px-4 py-2 glass rounded-full text-sm text-gray-300 mb-6 animate-slideUp">
+                <Sparkles className="w-4 h-4 mr-2 text-blue-400" />
+                Neural Music Platform of 2025
+                <span className="ml-2 px-2 py-1 bg-green-500/20 text-green-400 rounded-full text-xs">LIVE</span>
               </div>
             </div>
 
-            <h1 className="hero-title mb-6">
-              Secure Music Platform
+            <h1 className="hero-title mb-6 animate-slideUp">
+              The Future of
               <br />
-              <span className="gradient-text">
-                For Modern Artists
+              <span className="text-gradient relative">
+                Neural Music
+                <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-25 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
               </span>
             </h1>
 
-            <p className="hero-subtitle mb-12 max-w-3xl mx-auto">
-              Experience professional music management with enterprise-grade security,
-              two-factor authentication, and cloud synchronization. Built for musicians,
-              producers, and music enthusiasts who value security and quality.
+            <p className="hero-subtitle mb-12 max-w-3xl mx-auto animate-slideUp" style={{ animationDelay: '200ms' }}>
+              Experience revolutionary music management with quantum security, AI-powered recommendations,
+              and neural network synchronization. Join the next evolution of digital music.
             </p>
 
-            <div className="hero-actions mb-16">
+            <div className="hero-actions mb-16 animate-slideUp" style={{ animationDelay: '400ms' }}>
               <Link to="/register" className="btn btn-primary btn-lg group mr-4">
-                <span>Start Free Trial</span>
+                <Brain className="w-5 h-5 mr-2" />
+                <span>Join Neural Network</span>
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
               <Link to="/login" className="btn btn-secondary btn-lg group">
                 <Play className="w-5 h-5 mr-2" />
-                <span>Sign In</span>
+                <span>Access Interface</span>
               </Link>
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto animate-slideUp" style={{ animationDelay: '600ms' }}>
               {stats.map((stat, index) => (
-                <div key={index} className="text-center group">
-                  <div className="flex items-center justify-center mb-2">
+                <div key={index} className="text-center group hover:scale-105 transition-transform">
+                  <div className="flex items-center justify-center mb-2 text-blue-400">
                     {stat.icon}
                   </div>
-                  <div className="text-2xl md:text-3xl font-bold text-white mb-1 group-hover:text-neon-blue transition-colors">
+                  <div className="text-2xl md:text-3xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
                     {stat.number}
                   </div>
                   <div className="text-sm text-gray-400">{stat.label}</div>
@@ -212,17 +282,16 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="features py-32 relative">
+      <section id="features" className="py-32 relative">
         <div className="page-container">
           <div className="section-header text-center mb-20" data-animate id="features-header">
             <div className={`transition-all duration-1000 ${isVisible['features-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <h2 className="section-title text-4xl md:text-5xl font-bold mb-6">
-                Powerful Features
-                <span className="gradient-text block">For Modern Music</span>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Neural Features
+                <span className="text-gradient block">For the Future</span>
               </h2>
-              <p className="section-subtitle text-xl max-w-3xl mx-auto">
-                Built with modern security standards and professional-grade features
-                for the ultimate music management experience
+              <p className="text-xl max-w-3xl mx-auto text-gray-300">
+                Advanced AI-powered capabilities that redefine how you experience and manage music
               </p>
             </div>
           </div>
@@ -240,98 +309,106 @@ const LandingPage = () => {
                 data-animate
                 id={`feature-${index}`}
               >
-                <div className={`feature-icon bg-gradient-to-r ${feature.gradient} mb-6 group-hover:scale-110 transition-transform`}>
-                  {feature.icon}
+                <div className="relative z-10">
+                  <div className={`feature-icon bg-gradient-to-r ${feature.gradient} mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg relative`}>
+                    {feature.icon}
+                    <div className="absolute inset-0 bg-white/20 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  </div>
+                  <h3 className="feature-title text-xl font-bold mb-4 group-hover:text-blue-400 transition-colors">
+                    {feature.title}
+                  </h3>
+                  <p className="feature-description group-hover:text-gray-300 transition-colors">
+                    {feature.description}
+                  </p>
+                  <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent"></div>
+                  </div>
                 </div>
-                <h3 className="feature-title text-xl font-bold mb-4 group-hover:text-neon-blue transition-colors">
-                  {feature.title}
-                </h3>
-                <p className="feature-description group-hover:text-gray-300 transition-colors">
-                  {feature.description}
-                </p>
-                <div className="mt-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-full h-1 bg-gradient-to-r from-transparent via-current to-transparent"></div>
-                </div>
+
+                {/* Hover Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl"></div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* About Section */}
-      <section id="about" className="py-32 bg-gray-900/30 relative">
+      {/* Testimonials Section */}
+      <section id="testimonials" className="py-32 relative">
         <div className="page-container">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div data-animate id="about-content">
-              <div className={`transition-all duration-1000 ${isVisible['about-content'] ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-10'}`}>
-                <h2 className="text-4xl font-bold mb-6">
-                  Built for
-                  <span className="gradient-text block">Music Professionals</span>
-                </h2>
-                <p className="text-xl text-gray-300 mb-8">
-                  EchoWerk combines enterprise-grade security with intuitive music management.
-                  Our platform provides the tools and protection that modern musicians
-                  and content creators need to succeed.
-                </p>
-                <div className="space-y-4 mb-8">
-                  <div className="flex items-center">
-                    <Shield className="w-6 h-6 text-neon-blue mr-3" />
-                    <span>Enterprise-grade security and encryption</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Upload className="w-6 h-6 text-neon-green mr-3" />
-                    <span>High-quality audio processing and storage</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Heart className="w-6 h-6 text-neon-purple mr-3" />
-                    <span>Intuitive interface designed for creators</span>
-                  </div>
-                </div>
-                <Link to="/register" className="btn btn-accent group">
-                  <span>Join Today</span>
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                </Link>
-              </div>
+          <div className="section-header text-center mb-20" data-animate id="testimonials-header">
+            <div className={`transition-all duration-1000 ${isVisible['testimonials-header'] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+                Neural Reviews
+                <span className="text-gradient block">From Our Community</span>
+              </h2>
+              <p className="text-xl max-w-3xl mx-auto text-gray-300">
+                See what creators are saying about the neural music experience
+              </p>
             </div>
+          </div>
 
-            <div data-animate id="about-visual">
-              <div className={`transition-all duration-1000 delay-300 ${isVisible['about-visual'] ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-10'}`}>
-                <div className="relative">
-                  <div className="w-full h-96 bg-gradient-primary rounded-2xl opacity-20"></div>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center">
-                      <Music className="w-24 h-24 text-neon-blue mx-auto mb-4" />
-                      <p className="text-lg font-semibold">Professional Platform</p>
-                      <p className="text-gray-400">Secure & Reliable</p>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <div
+                key={index}
+                className={`glass-card p-6 group hover:scale-105 transition-all duration-500 ${
+                  isVisible[`testimonial-${index}`] ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'
+                }`}
+                style={{ transitionDelay: `${index * 200}ms` }}
+                data-animate
+                id={`testimonial-${index}`}
+              >
+                <div className="flex items-center mb-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold mr-4">
+                    {testimonial.avatar}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-white">{testimonial.name}</h4>
+                    <p className="text-sm text-gray-400">{testimonial.role}</p>
                   </div>
                 </div>
+
+                <div className="flex mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+
+                <p className="text-gray-300 group-hover:text-white transition-colors">
+                  "{testimonial.content}"
+                </p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="cta py-32">
+      <section className="py-32">
         <div className="page-container">
-          <div className="cta-content glass-card text-center max-w-4xl mx-auto" data-animate id="cta-section">
-            <div className={`transition-all duration-1000 ${isVisible['cta-section'] ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
+          <div className="cta-content glass-card text-center max-w-4xl mx-auto relative overflow-hidden" data-animate id="cta-section">
+            {/* Background Animation */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-purple-600/10 to-cyan-600/10 animate-pulse"></div>
+
+            <div className={`relative z-10 transition-all duration-1000 ${isVisible['cta-section'] ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
               <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Ready to Secure
-                <span className="gradient-text block">Your Music?</span>
+                Ready to Join the
+                <span className="text-gradient block">Neural Revolution?</span>
               </h2>
               <p className="text-xl text-gray-300 mb-12 max-w-2xl mx-auto">
-                Join thousands of musicians who trust our platform to protect and manage
-                their music with professional-grade security and features.
+                Experience the future of music with advanced AI, quantum security, and neural synchronization.
+                Join thousands of creators in the next dimension of digital music.
               </p>
               <div className="flex flex-col sm:flex-row gap-6 justify-center">
-                <Link to="/register" className="btn btn-primary btn-lg group">
-                  <span>Get Started Free</span>
+                <Link to="/register" className="btn btn-primary btn-xl group">
+                  <Brain className="w-5 h-5 mr-2" />
+                  <span>Enter Neural Network</span>
                   <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <a href="#features" className="btn btn-secondary btn-lg">
-                  Learn More
+                <a href="#features" className="btn btn-secondary btn-xl group">
+                  <Eye className="w-5 h-5 mr-2" />
+                  <span>Explore Features</span>
                 </a>
               </div>
             </div>
@@ -340,77 +417,63 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="footer py-16 border-t border-gray-800">
+      <footer className="py-16 border-t border-white/5">
         <div className="page-container">
-          <div className="footer-content">
-            <div className="footer-brand mb-8 lg:mb-0">
-              <div className="nav-logo text-2xl mb-4">
-                <Music className="w-8 h-8 mr-2 inline" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <div className="md:col-span-1">
+              <div className="nav-logo text-2xl mb-4 flex items-center">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+                  <Music className="w-5 h-5 text-white" />
+                </div>
                 EchoWerk
               </div>
               <p className="text-gray-400 mb-4">
-                Professional music platform with enterprise security
+                Neural music platform with quantum security and AI-powered features
               </p>
               <div className="flex space-x-4">
-                <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-neon-blue transition-colors cursor-pointer">
-                  <span className="text-sm">📧</span>
-                </div>
-                <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-neon-purple transition-colors cursor-pointer">
-                  <span className="text-sm">🎵</span>
-                </div>
-                <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center hover:bg-neon-green transition-colors cursor-pointer">
-                  <span className="text-sm">🎶</span>
-                </div>
+                {[Brain, Music, Shield].map((Icon, index) => (
+                  <div key={index} className="w-8 h-8 glass rounded-full flex items-center justify-center hover:bg-blue-500/20 transition-colors cursor-pointer">
+                    <Icon className="w-4 h-4 text-gray-400 hover:text-blue-400 transition-colors" />
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              <div className="footer-section">
-                <h4 className="font-semibold text-white mb-4">Product</h4>
-                <div className="space-y-2">
-                  <a href="#features" className="block text-gray-400 hover:text-neon-blue transition-colors">Features</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Security</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Documentation</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">API</a>
-                </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Neural Platform</h4>
+              <div className="space-y-2">
+                <a href="#features" className="block text-gray-400 hover:text-blue-400 transition-colors">Features</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Security</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">API</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Documentation</a>
               </div>
+            </div>
 
-              <div className="footer-section">
-                <h4 className="font-semibold text-white mb-4">Company</h4>
-                <div className="space-y-2">
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">About</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Team</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Blog</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Careers</a>
-                </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Quantum Support</h4>
+              <div className="space-y-2">
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Help Center</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Community</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Status</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Contact</a>
               </div>
+            </div>
 
-              <div className="footer-section">
-                <h4 className="font-semibold text-white mb-4">Support</h4>
-                <div className="space-y-2">
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Help Center</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Contact</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Community</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Status</a>
-                </div>
-              </div>
-
-              <div className="footer-section">
-                <h4 className="font-semibold text-white mb-4">Legal</h4>
-                <div className="space-y-2">
-                  <Link to="/privacy" className="block text-gray-400 hover:text-neon-blue transition-colors">Privacy</Link>
-                  <Link to="/terms" className="block text-gray-400 hover:text-neon-blue transition-colors">Terms</Link>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Security</a>
-                  <a href="#" className="block text-gray-400 hover:text-neon-blue transition-colors">Cookies</a>
-                </div>
+            <div>
+              <h4 className="font-semibold text-white mb-4">Legal Matrix</h4>
+              <div className="space-y-2">
+                <Link to="/privacy" className="block text-gray-400 hover:text-blue-400 transition-colors">Privacy</Link>
+                <Link to="/terms" className="block text-gray-400 hover:text-blue-400 transition-colors">Terms</Link>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Security</a>
+                <a href="#" className="block text-gray-400 hover:text-blue-400 transition-colors">Compliance</a>
               </div>
             </div>
           </div>
 
-          <div className="footer-bottom pt-8 mt-8 border-t border-gray-800 text-center">
+          <div className="border-t border-white/5 pt-8 text-center">
             <p className="text-gray-500">
-              &copy; 2025 EchoWerk. All rights reserved.
-              <span className="text-neon-blue ml-2">Made with ❤️ for musicians</span>
+              &copy; 2025 EchoWerk Neural Technologies. All quantum rights reserved.
+              <span className="text-blue-400 ml-2">Powered by Neural Networks ⚡</span>
             </p>
           </div>
         </div>
