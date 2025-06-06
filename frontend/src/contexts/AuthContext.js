@@ -1,4 +1,4 @@
-// frontend/src/contexts/AuthContext.js - Fixed Error Handling
+// frontend/src/contexts/AuthContext.js - Fixed Auth Context
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -30,7 +30,7 @@ const handleApiError = (error) => {
     case 401: return 'Authentication failed. Please check your credentials.';
     case 403: return 'Access denied. Please verify your account.';
     case 404: return 'Service not found. Please try again later.';
-    case 409: return 'Resource already exists. Please use different details.';
+    case 409: return 'Email or username already exists.';
     case 422: return 'Invalid data provided. Please check your input.';
     case 429: return 'Too many requests. Please wait before trying again.';
     case 500: return 'Server error. Please try again later.';
@@ -59,7 +59,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor with better error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, [initializeAuth]);
 
-  // Login function with proper error handling
+  // Login function
   const login = async (email, password, totpCode = null, backupCode = null) => {
     try {
       setLoading(true);
@@ -171,11 +171,12 @@ export const AuthProvider = ({ children }) => {
         return { success: true, user: data.user };
       }
 
-      throw new Error('Invalid login response');
+      // Handle error response
+      const message = data.message || 'Login failed';
+      return { success: false, error: message };
 
     } catch (error) {
       const message = handleApiError(error);
-      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -189,12 +190,15 @@ export const AuthProvider = ({ children }) => {
 
       const response = await api.post('/auth/register', userData);
 
-      toast.success('Account created! Please check your email to verify your account.');
-      return { success: true, message: 'Registration successful' };
+      if (response.data.success) {
+        toast.success('Account created! Please check your email to verify your account.');
+        return { success: true, message: 'Registration successful' };
+      }
+
+      return { success: false, error: response.data.message || 'Registration failed' };
 
     } catch (error) {
       const message = handleApiError(error);
-      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -325,9 +329,11 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       await api.post('/auth/forgot-password', { email });
+      toast.success('Reset email sent!');
       return { success: true, message: 'Reset email sent' };
     } catch (error) {
       const message = handleApiError(error);
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -342,9 +348,11 @@ export const AuthProvider = ({ children }) => {
         token,
         new_password: newPassword,
       });
+      toast.success('Password reset successful!');
       return { success: true, message: 'Password reset successful' };
     } catch (error) {
       const message = handleApiError(error);
+      toast.error(message);
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -372,9 +380,8 @@ export const AuthProvider = ({ children }) => {
   const getSecurityScore = () => {
     if (!user) return 0;
     let score = 20;
-    if (user.is_verified) score += 30;
+    if (user.is_verified) score += 40;
     if (user.is_2fa_enabled) score += 40;
-    if (user.last_login) score += 10;
     return Math.min(score, 100);
   };
 

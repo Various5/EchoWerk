@@ -1,4 +1,4 @@
-// src/components/ProtectedRoute.js
+// frontend/src/components/ProtectedRoute.js - Clean Protected Route
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -7,29 +7,20 @@ import LoadingSpinner from './LoadingSpinner';
 /**
  * ProtectedRoute Component
  *
- * Protects routes that require authentication and optional permissions.
+ * Protects routes that require authentication.
  * Redirects unauthenticated users to login page.
- *
- * @param {Object} props
- * @param {React.ReactNode} props.children - Components to render if authenticated
- * @param {string} props.requiredPermission - Optional permission requirement
- * @param {string} props.redirectTo - Custom redirect path (defaults to /login)
- * @param {boolean} props.requireVerification - Require email verification
- * @param {boolean} props.require2FA - Require 2FA setup
  */
 const ProtectedRoute = ({
   children,
-  requiredPermission = null,
   redirectTo = '/login',
-  requireVerification = false,
-  require2FA = false
+  requireVerification = false
 }) => {
-  const { isAuthenticated, user, loading, hasPermission } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
   if (loading) {
-    return <LoadingSpinner />;
+    return <LoadingSpinner fullScreen text="Verifying authentication..." />;
   }
 
   // Redirect to login if not authenticated
@@ -46,33 +37,37 @@ const ProtectedRoute = ({
   // Check email verification requirement
   if (requireVerification && !user.is_verified) {
     return (
-      <Navigate
-        to="/verify-email"
-        state={{ from: location }}
-        replace
-      />
-    );
-  }
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4">
+        <div className="max-w-md w-full">
+          <div className="bg-slate-800 border border-slate-700 rounded-lg p-8 text-center">
+            <div className="w-16 h-16 bg-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+            </div>
 
-  // Check 2FA requirement
-  if (require2FA && !user.is_2fa_enabled) {
-    return (
-      <Navigate
-        to="/setup-2fa"
-        state={{ from: location }}
-        replace
-      />
-    );
-  }
+            <h2 className="text-xl font-bold text-white mb-4">
+              Email Verification Required
+            </h2>
 
-  // Check specific permission requirement
-  if (requiredPermission && !hasPermission(requiredPermission)) {
-    return (
-      <Navigate
-        to="/unauthorized"
-        state={{ from: location }}
-        replace
-      />
+            <p className="text-gray-400 mb-6">
+              Please verify your email address to access this page.
+              Check your email for a verification link.
+            </p>
+
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                I've Verified My Email
+              </button>
+
+              <Navigate to="/dashboard" replace />
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -81,10 +76,7 @@ const ProtectedRoute = ({
 };
 
 // Higher-order component for wrapping components with protection
-export const withAuth = (
-  Component,
-  options = {}
-) => {
+export const withAuth = (Component, options = {}) => {
   return (props) => (
     <ProtectedRoute {...options}>
       <Component {...props} />
@@ -93,47 +85,20 @@ export const withAuth = (
 };
 
 // Specific route protectors for common use cases
-export const AdminRoute = ({ children }) => (
-  <ProtectedRoute
-    requiredPermission="admin"
-    requireVerification={true}
-    require2FA={true}
-  >
-    {children}
-  </ProtectedRoute>
-);
-
 export const VerifiedRoute = ({ children }) => (
   <ProtectedRoute requireVerification={true}>
     {children}
   </ProtectedRoute>
 );
 
-export const SecureRoute = ({ children }) => (
-  <ProtectedRoute
-    requireVerification={true}
-    require2FA={true}
-  >
-    {children}
-  </ProtectedRoute>
-);
-
 // Hook for programmatic navigation with auth checks
 export const useAuthenticatedNavigation = () => {
-  const { isAuthenticated, user, hasPermission } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
-  const canNavigateTo = (path, requirements = {}) => {
+  const canNavigateTo = (requirements = {}) => {
     if (!isAuthenticated) return false;
 
     if (requirements.requireVerification && !user?.is_verified) {
-      return false;
-    }
-
-    if (requirements.require2FA && !user?.is_2fa_enabled) {
-      return false;
-    }
-
-    if (requirements.permission && !hasPermission(requirements.permission)) {
       return false;
     }
 
@@ -145,14 +110,6 @@ export const useAuthenticatedNavigation = () => {
 
     if (requirements.requireVerification && !user?.is_verified) {
       return '/verify-email';
-    }
-
-    if (requirements.require2FA && !user?.is_2fa_enabled) {
-      return '/setup-2fa';
-    }
-
-    if (requirements.permission && !hasPermission(requirements.permission)) {
-      return '/unauthorized';
     }
 
     return null;

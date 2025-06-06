@@ -1,4 +1,4 @@
-// src/pages/VerifyEmail.js
+// frontend/src/pages/VerifyEmail.js - Clean Email Verification
 import React, { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -8,7 +8,8 @@ import {
   Mail,
   Loader,
   ArrowLeft,
-  RefreshCw
+  RefreshCw,
+  Music
 } from 'lucide-react';
 
 const VerifyEmail = () => {
@@ -70,11 +71,7 @@ const VerifyEmail = () => {
   const resendVerification = async () => {
     try {
       setIsResending(true);
-
-      // Extract email from error or use a modal to ask for email
-      // For now, we'll redirect to a resend page
       navigate('/resend-verification');
-
     } catch (error) {
       console.error('Failed to resend verification:', error);
     } finally {
@@ -87,17 +84,17 @@ const VerifyEmail = () => {
       case 'loading':
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">
-              <Loader className="w-16 h-16 animate-spin text-blue-400 mx-auto" />
+            <div className="w-16 h-16 mx-auto mb-6">
+              <Loader className="w-16 h-16 animate-spin text-blue-500" />
             </div>
-            <h1 className="auth-title">Verifying Your Email</h1>
-            <p className="auth-subtitle">
+            <h2 className="text-2xl font-bold text-white mb-4">
+              Verifying Your Email
+            </h2>
+            <p className="text-gray-400 mb-6">
               Please wait while we verify your email address...
             </p>
-            <div className="mt-6">
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
-              </div>
+            <div className="w-full bg-slate-700 rounded-full h-2">
+              <div className="bg-blue-500 h-2 rounded-full animate-pulse" style={{ width: '60%' }}></div>
             </div>
           </div>
         );
@@ -105,31 +102,39 @@ const VerifyEmail = () => {
       case 'success':
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">
-              <CheckCircle className="w-16 h-16 text-green-400 mx-auto" />
+            <div className="w-16 h-16 bg-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
-            <h1 className="auth-title text-green-400">Email Verified!</h1>
-            <p className="auth-subtitle">
+            <h2 className="text-2xl font-bold text-green-400 mb-4">
+              Email Verified!
+            </h2>
+            <p className="text-gray-400 mb-6">
               {message}
             </p>
 
-            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mt-6">
+            <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
               <div className="flex items-center justify-center text-green-300">
                 <CheckCircle className="w-5 h-5 mr-2" />
                 <span className="text-sm">Your account is now fully activated</span>
               </div>
             </div>
 
-            <div className="mt-8 space-y-4">
+            <div className="space-y-4">
               <p className="text-gray-400 text-sm">
                 You will be redirected to the login page in a few seconds...
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link to="/login" className="btn btn-primary">
+                <Link
+                  to="/login"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
                   Continue to Login
                 </Link>
-                <Link to="/dashboard" className="btn btn-secondary">
+                <Link
+                  to="/dashboard"
+                  className="bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                >
                   Go to Dashboard
                 </Link>
               </div>
@@ -140,15 +145,17 @@ const VerifyEmail = () => {
       case 'error':
         return (
           <div className="text-center">
-            <div className="text-6xl mb-6">
-              <XCircle className="w-16 h-16 text-red-400 mx-auto" />
+            <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+              <XCircle className="w-8 h-8 text-white" />
             </div>
-            <h1 className="auth-title text-red-400">Verification Failed</h1>
-            <p className="auth-subtitle">
+            <h2 className="text-2xl font-bold text-red-400 mb-4">
+              Verification Failed
+            </h2>
+            <p className="text-gray-400 mb-6">
               {message}
             </p>
 
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mt-6">
+            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-6">
               <div className="flex items-start text-left">
                 <XCircle className="w-5 h-5 text-red-400 mr-3 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-red-300">
@@ -162,12 +169,12 @@ const VerifyEmail = () => {
               </div>
             </div>
 
-            <div className="mt-8 space-y-4">
+            <div className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <button
                   onClick={resendVerification}
                   disabled={isResending}
-                  className="btn btn-primary"
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
                 >
                   {isResending ? (
                     <>
@@ -184,7 +191,7 @@ const VerifyEmail = () => {
 
                 <button
                   onClick={verifyEmail}
-                  className="btn btn-secondary"
+                  className="bg-slate-700 hover:bg-slate-600 border border-slate-600 hover:border-slate-500 text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
                 >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Try Again
@@ -193,7 +200,7 @@ const VerifyEmail = () => {
 
               <Link
                 to="/login"
-                className="text-blue-400 hover:text-blue-300 font-medium flex items-center justify-center mt-4"
+                className="text-blue-400 hover:text-blue-300 font-medium flex items-center justify-center"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Back to Login
@@ -208,54 +215,51 @@ const VerifyEmail = () => {
   };
 
   return (
-    <div className="auth-container fade-in">
-      <div className="glass-card auth-card">
-        <div className="auth-header">
-          <div className="text-center mb-6">
-            <div className="text-2xl mb-2">🎵</div>
-            <div className="text-lg font-semibold text-blue-400">EchoWerk</div>
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex justify-center">
+            <Link
+              to="/"
+              className="flex items-center text-white hover:text-blue-400 transition-colors"
+            >
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <Music className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold">EchoWerk</span>
+            </Link>
           </div>
         </div>
 
-        {renderContent()}
+        {/* Content */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-8">
+          {renderContent()}
+        </div>
 
         {/* Help Section */}
         {verificationStatus === 'error' && (
-          <div className="mt-8 pt-6 border-t border-gray-700">
-            <div className="text-center">
-              <p className="text-sm text-gray-400 mb-3">
-                Still having trouble?
-              </p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center text-sm">
-                <Link
-                  to="/contact"
-                  className="text-blue-400 hover:text-blue-300"
-                >
-                  Contact Support
-                </Link>
-                <span className="hidden sm:inline text-gray-600">•</span>
-                <Link
-                  to="/help"
-                  className="text-blue-400 hover:text-blue-300"
-                >
-                  Help Center
-                </Link>
-              </div>
+          <div className="text-center pt-6 border-t border-slate-700">
+            <p className="text-sm text-gray-400 mb-3">
+              Still having trouble?
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center text-sm">
+              <Link
+                to="/contact"
+                className="text-blue-400 hover:text-blue-300"
+              >
+                Contact Support
+              </Link>
+              <span className="hidden sm:inline text-gray-600">•</span>
+              <Link
+                to="/help"
+                className="text-blue-400 hover:text-blue-300"
+              >
+                Help Center
+              </Link>
             </div>
           </div>
         )}
-      </div>
-
-      {/* Background decoration */}
-      <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className={`absolute -top-40 -right-32 w-96 h-96 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse ${
-          verificationStatus === 'success' ? 'bg-green-500' : 
-          verificationStatus === 'error' ? 'bg-red-500' : 'bg-blue-500'
-        }`}></div>
-        <div className={`absolute -bottom-40 -left-32 w-96 h-96 rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-pulse ${
-          verificationStatus === 'success' ? 'bg-emerald-500' : 
-          verificationStatus === 'error' ? 'bg-orange-500' : 'bg-purple-500'
-        }`}></div>
       </div>
     </div>
   );

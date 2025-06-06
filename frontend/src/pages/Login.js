@@ -1,845 +1,298 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Eye, EyeOff, Mail, Lock, Smartphone, Shield, AlertCircle, CheckCircle } from 'lucide-react';
+// frontend/src/pages/Login.js - Clean Login Implementation
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowLeft,
+  AlertCircle,
+  Music,
+  Smartphone
+} from 'lucide-react';
 
-const LoginSystem = () => {
-  const [currentView, setCurrentView] = useState('login'); // login, register, forgot, verify, twofa
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: '',
-    username: '',
-    totpCode: ''
-  });
+const Login = () => {
+  const { login, isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState({});
   const [requires2FA, setRequires2FA] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setError,
+    clearErrors,
+    watch
+  } = useForm();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     }
-  };
+  }, [isAuthenticated, navigate, location]);
 
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validatePassword = (password) => {
-    const minLength = password.length >= 8;
-    const hasUpper = /[A-Z]/.test(password);
-    const hasLower = /[a-z]/.test(password);
-    const hasNumber = /\d/.test(password);
-    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return {
-      isValid: minLength && hasUpper && hasLower && hasNumber && hasSpecial,
-      requirements: {
-        minLength,
-        hasUpper,
-        hasLower,
-        hasNumber,
-        hasSpecial
-      }
-    };
-  };
-
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setErrors({});
-
-    // Basic validation
-    const newErrors = {};
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!validateEmail(formData.email)) newErrors.email = 'Please enter a valid email';
-    if (!formData.password) newErrors.password = 'Password is required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsLoading(false);
-      return;
+  // Show success message if redirected from registration
+  useEffect(() => {
+    if (location.state?.message) {
+      // Message will be shown via toast in AuthContext
     }
+  }, [location.state]);
 
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+  const onSubmit = async (data) => {
+    clearErrors();
 
-      // Simulate 2FA requirement for demo
-      if (formData.email === 'demo@example.com') {
-        setRequires2FA(true);
-        setCurrentView('twofa');
+    const result = await login(
+      data.email,
+      data.password,
+      data.totpCode,
+      data.backupCode
+    );
+
+    if (result.success) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    } else if (result.requires2FA) {
+      setRequires2FA(true);
+      setUserEmail(data.email);
+    } else if (result.error) {
+      if (result.error.includes('email')) {
+        setError('email', { message: result.error });
+      } else if (result.error.includes('password')) {
+        setError('password', { message: result.error });
+      } else if (result.error.includes('2FA') || result.error.includes('verification')) {
+        setError('totpCode', { message: result.error });
       } else {
-        // Successful login
-        alert('Login successful! Welcome to EchoWerk.');
+        setError('general', { message: result.error });
       }
-    } catch (error) {
-      setErrors({ general: 'Login failed. Please check your credentials.' });
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const handleRegister = async () => {
-    setIsLoading(true);
-    setErrors({});
+  if (isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
 
-    // Validation
-    const newErrors = {};
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.username) newErrors.username = 'Username is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    else if (!validateEmail(formData.email)) newErrors.email = 'Please enter a valid email';
-
-    const passwordValidation = validatePassword(formData.password);
-    if (!formData.password) newErrors.password = 'Password is required';
-    else if (!passwordValidation.isValid) newErrors.password = 'Password does not meet requirements';
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setCurrentView('verify');
-    } catch (error) {
-      setErrors({ general: 'Registration failed. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handle2FA = async () => {
-    setIsLoading(true);
-    setErrors({});
-
-    if (!formData.totpCode || formData.totpCode.length !== 6) {
-      setErrors({ totpCode: 'Please enter a 6-digit verification code' });
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      alert('2FA verification successful! Welcome to EchoWerk.');
-    } catch (error) {
-      setErrors({ totpCode: 'Invalid verification code' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const passwordValidation = validatePassword(formData.password);
-
-  // Base styles
-  const containerStyle = {
-    minHeight: '100vh',
-    backgroundColor: '#0f172a',
-    color: '#ffffff',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1rem'
-  };
-
-  const cardStyle = {
-    backgroundColor: '#1e293b',
-    border: '1px solid #334155',
-    borderRadius: '1rem',
-    padding: '2rem',
-    width: '100%',
-    maxWidth: '28rem',
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    backgroundColor: '#334155',
-    border: '1px solid #475569',
-    borderRadius: '0.5rem',
-    color: '#ffffff',
-    fontSize: '0.875rem',
-    outline: 'none',
-    transition: 'all 0.2s'
-  };
-
-  const inputErrorStyle = {
-    ...inputStyle,
-    borderColor: '#ef4444'
-  };
-
-  const buttonStyle = {
-    width: '100%',
-    padding: '0.75rem 1rem',
-    background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
-    border: 'none',
-    borderRadius: '0.5rem',
-    color: '#ffffff',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem'
-  };
-
-  const buttonDisabledStyle = {
-    ...buttonStyle,
-    opacity: '0.5',
-    cursor: 'not-allowed'
-  };
-
-  const labelStyle = {
-    display: 'block',
-    fontSize: '0.875rem',
-    fontWeight: '500',
-    color: '#d1d5db',
-    marginBottom: '0.5rem'
-  };
-
-  const errorStyle = {
-    color: '#ef4444',
-    fontSize: '0.875rem',
-    marginTop: '0.5rem',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '0.25rem'
-  };
-
-  // Login View
-  if (currentView === 'login') {
-    return (
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{
-              width: '3rem',
-              height: '3rem',
-              background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
-              borderRadius: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Lock size={24} color="white" />
-            </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Welcome Back</h1>
-            <p style={{ color: '#9ca3af' }}>Sign in to your EchoWerk account</p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  style={errors.email ? inputErrorStyle : inputStyle}
-                  placeholder="Enter your email"
-                />
-                <Mail style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }} size={16} />
+  return (
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        {/* Header */}
+        <div>
+          <div className="flex justify-center">
+            <Link
+              to="/"
+              className="flex items-center text-white hover:text-blue-400 transition-colors"
+            >
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <Music className="w-6 h-6 text-white" />
               </div>
-              {errors.email && (
-                <div style={errorStyle}>
-                  <AlertCircle size={16} />
-                  {errors.email}
-                </div>
-              )}
-            </div>
+              <span className="text-2xl font-bold">EchoWerk</span>
+            </Link>
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-bold text-white">
+            {requires2FA ? 'Two-Factor Authentication' : 'Sign in to your account'}
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-400">
+            {requires2FA ? (
+              'Enter your verification code'
+            ) : (
+              <>
+                Don't have an account?{' '}
+                <Link
+                  to="/register"
+                  className="text-blue-400 hover:text-blue-300 font-medium"
+                >
+                  Create one
+                </Link>
+              </>
+            )}
+          </p>
+        </div>
 
-            <div>
-              <label style={labelStyle}>Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  style={errors.password ? inputErrorStyle : inputStyle}
-                  placeholder="Enter your password"
-                />
-                <Lock style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }} size={16} />
+        {/* Form */}
+        <div className="bg-slate-800 border border-slate-700 rounded-lg p-8">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            {!requires2FA ? (
+              <>
+                {/* Email Field */}
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-2">
+                    Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className={`w-full px-3 py-2 pl-10 bg-slate-700 border ${
+                        errors.email ? 'border-red-500' : 'border-slate-600'
+                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Enter your email"
+                      {...register('email', {
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^\S+@\S+$/i,
+                          message: 'Please enter a valid email address'
+                        }
+                      })}
+                    />
+                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  </div>
+                  {errors.email && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.email.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Password Field */}
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-2">
+                    Password
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      autoComplete="current-password"
+                      className={`w-full px-3 py-2 pl-10 pr-10 bg-slate-700 border ${
+                        errors.password ? 'border-red-500' : 'border-slate-600'
+                      } rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Enter your password"
+                      {...register('password', {
+                        required: 'Password is required'
+                      })}
+                    />
+                    <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-300"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.password.message}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* 2FA Code Field */}
+                <div>
+                  <label htmlFor="totpCode" className="block text-sm font-medium text-gray-300 mb-2">
+                    Verification Code
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="totpCode"
+                      type="text"
+                      maxLength={6}
+                      className={`w-full px-3 py-2 pl-10 bg-slate-700 border ${
+                        errors.totpCode ? 'border-red-500' : 'border-slate-600'
+                      } rounded-lg text-white placeholder-gray-400 text-center font-mono text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="000000"
+                      {...register('totpCode', {
+                        pattern: {
+                          value: /^\d{6}$/,
+                          message: 'Please enter a 6-digit code'
+                        }
+                      })}
+                    />
+                    <Smartphone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                  </div>
+                  {errors.totpCode && (
+                    <p className="mt-1 text-sm text-red-400 flex items-center">
+                      <AlertCircle className="w-4 h-4 mr-1" />
+                      {errors.totpCode.message}
+                    </p>
+                  )}
+                  <p className="mt-2 text-sm text-gray-400">
+                    Enter the 6-digit code from your authenticator app
+                  </p>
+                </div>
+
+                {/* Backup Code Field */}
+                <div>
+                  <label htmlFor="backupCode" className="block text-sm font-medium text-gray-300 mb-2">
+                    Or use a backup code
+                  </label>
+                  <input
+                    id="backupCode"
+                    type="text"
+                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter backup code"
+                    {...register('backupCode')}
+                  />
+                </div>
+
+                {/* Back Button */}
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#9ca3af',
-                    cursor: 'pointer'
-                  }}
+                  onClick={() => setRequires2FA(false)}
+                  className="flex items-center text-sm text-gray-400 hover:text-white"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  <ArrowLeft className="w-4 h-4 mr-1" />
+                  Back to login
                 </button>
-              </div>
-              {errors.password && (
-                <div style={errorStyle}>
-                  <AlertCircle size={16} />
-                  {errors.password}
-                </div>
-              )}
-            </div>
+              </>
+            )}
 
+            {/* General Error */}
             {errors.general && (
-              <div style={{
-                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                borderRadius: '0.5rem',
-                padding: '1rem'
-              }}>
-                <div style={errorStyle}>
-                  <AlertCircle size={16} />
-                  {errors.general}
-                </div>
+              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
+                <p className="text-sm text-red-400 flex items-center">
+                  <AlertCircle className="w-4 h-4 mr-2" />
+                  {errors.general.message}
+                </p>
               </div>
             )}
 
-            <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              style={isLoading ? buttonDisabledStyle : buttonStyle}
-            >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '1.25rem',
-                    height: '1.25rem',
-                    border: '2px solid transparent',
-                    borderTop: '2px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  Signing In...
-                </>
-              ) : (
-                'Sign In'
-              )}
-            </button>
-
-            <div style={{ textAlign: 'center' }}>
-              <button
-                onClick={() => setCurrentView('forgot')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
-                }}
-              >
-                Forgot your password?
-              </button>
-            </div>
-          </div>
-
-          <div style={{
-            marginTop: '2rem',
-            paddingTop: '1.5rem',
-            borderTop: '1px solid #334155',
-            textAlign: 'center'
-          }}>
-            <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
-              Don't have an account?{' '}
-              <button
-                onClick={() => setCurrentView('register')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#3b82f6',
-                  fontWeight: '500',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
-                }}
-              >
-                Create one
-              </button>
-            </p>
-          </div>
-        </div>
-
-        <style>
-          {`
-            @keyframes spin {
-              to { transform: rotate(360deg); }
-            }
-          `}
-        </style>
-      </div>
-    );
-  }
-
-  // Register View
-  if (currentView === 'register') {
-    return (
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <button
-              onClick={() => setCurrentView('login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                marginRight: '1rem'
-              }}
-            >
-              <ArrowLeft size={20} />
-            </button>
+            {/* Submit Button */}
             <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Create Account</h1>
-              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>Join EchoWerk today</p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={labelStyle}>First Name</label>
-                <input
-                  type="text"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleInputChange}
-                  style={errors.firstName ? inputErrorStyle : inputStyle}
-                  placeholder="First name"
-                />
-                {errors.firstName && (
-                  <div style={{ ...errorStyle, fontSize: '0.75rem' }}>{errors.firstName}</div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white font-medium py-2 px-4 rounded-lg transition-colors flex items-center justify-center"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    {requires2FA ? 'Verifying...' : 'Signing in...'}
+                  </>
+                ) : (
+                  requires2FA ? 'Verify Code' : 'Sign In'
                 )}
-              </div>
-              <div>
-                <label style={labelStyle}>Last Name</label>
-                <input
-                  type="text"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleInputChange}
-                  style={errors.lastName ? inputErrorStyle : inputStyle}
-                  placeholder="Last name"
-                />
-                {errors.lastName && (
-                  <div style={{ ...errorStyle, fontSize: '0.75rem' }}>{errors.lastName}</div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>Username</label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleInputChange}
-                style={errors.username ? inputErrorStyle : inputStyle}
-                placeholder="Choose a username"
-              />
-              {errors.username && (
-                <div style={errorStyle}>{errors.username}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                style={errors.email ? inputErrorStyle : inputStyle}
-                placeholder="your@email.com"
-              />
-              {errors.email && (
-                <div style={errorStyle}>{errors.email}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={labelStyle}>Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  style={errors.password ? inputErrorStyle : inputStyle}
-                  placeholder="Create a strong password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#9ca3af',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-
-              {formData.password && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginBottom: '0.5rem' }}>
-                    Password requirements:
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    {[
-                      { key: 'minLength', text: 'At least 8 characters' },
-                      { key: 'hasUpper', text: 'One uppercase letter' },
-                      { key: 'hasLower', text: 'One lowercase letter' },
-                      { key: 'hasNumber', text: 'One number' },
-                      { key: 'hasSpecial', text: 'One special character' }
-                    ].map(req => (
-                      <div key={req.key} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        fontSize: '0.75rem',
-                        color: passwordValidation.requirements[req.key] ? '#22c55e' : '#9ca3af'
-                      }}>
-                        {passwordValidation.requirements[req.key] ? (
-                          <CheckCircle size={12} style={{ marginRight: '0.5rem' }} />
-                        ) : (
-                          <div style={{
-                            width: '12px',
-                            height: '12px',
-                            border: '1px solid #6b7280',
-                            borderRadius: '50%',
-                            marginRight: '0.5rem'
-                          }} />
-                        )}
-                        {req.text}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {errors.password && (
-                <div style={errorStyle}>{errors.password}</div>
-              )}
-            </div>
-
-            <div>
-              <label style={labelStyle}>Confirm Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleInputChange}
-                  style={errors.confirmPassword ? inputErrorStyle : inputStyle}
-                  placeholder="Confirm your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#9ca3af',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              {errors.confirmPassword && (
-                <div style={errorStyle}>{errors.confirmPassword}</div>
-              )}
-            </div>
-
-            <button
-              onClick={handleRegister}
-              disabled={isLoading || !passwordValidation.isValid}
-              style={isLoading || !passwordValidation.isValid ? buttonDisabledStyle : buttonStyle}
-            >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '1.25rem',
-                    height: '1.25rem',
-                    border: '2px solid transparent',
-                    borderTop: '2px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  Creating Account...
-                </>
-              ) : (
-                'Create Account'
-              )}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Two-Factor Authentication View
-  if (currentView === 'twofa') {
-    return (
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{
-              width: '3rem',
-              height: '3rem',
-              background: 'linear-gradient(to right, #22c55e, #3b82f6)',
-              borderRadius: '0.75rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 1rem'
-            }}>
-              <Shield size={24} color="white" />
-            </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
-              Two-Factor Authentication
-            </h1>
-            <p style={{ color: '#9ca3af' }}>
-              Enter the verification code from your authenticator app
-            </p>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div>
-              <label style={labelStyle}>Verification Code</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="text"
-                  name="totpCode"
-                  value={formData.totpCode}
-                  onChange={handleInputChange}
-                  maxLength={6}
-                  style={{
-                    ...inputStyle,
-                    textAlign: 'center',
-                    fontSize: '1.5rem',
-                    letterSpacing: '0.1em',
-                    fontFamily: 'monospace',
-                    borderColor: errors.totpCode ? '#ef4444' : '#475569'
-                  }}
-                  placeholder="000000"
-                />
-                <Smartphone style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }} size={16} />
-              </div>
-              {errors.totpCode && (
-                <div style={errorStyle}>
-                  <AlertCircle size={16} />
-                  {errors.totpCode}
-                </div>
-              )}
-            </div>
-
-            <button
-              onClick={handle2FA}
-              disabled={isLoading || formData.totpCode.length !== 6}
-              style={{
-                ...buttonStyle,
-                background: 'linear-gradient(to right, #22c55e, #3b82f6)',
-                opacity: isLoading || formData.totpCode.length !== 6 ? '0.5' : '1'
-              }}
-            >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '1.25rem',
-                    height: '1.25rem',
-                    border: '2px solid transparent',
-                    borderTop: '2px solid white',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  Verifying...
-                </>
-              ) : (
-                'Verify Code'
-              )}
-            </button>
-
-            <div style={{ textAlign: 'center' }}>
-              <button
-                onClick={() => setCurrentView('login')}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#9ca3af',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.25rem'
-                }}
-              >
-                <ArrowLeft size={14} />
-                Back to Login
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  // Email Verification View
-  if (currentView === 'verify') {
-    return (
-      <div style={containerStyle}>
-        <div style={{ ...cardStyle, textAlign: 'center' }}>
-          <div style={{
-            width: '3rem',
-            height: '3rem',
-            background: 'linear-gradient(to right, #3b82f6, #8b5cf6)',
-            borderRadius: '0.75rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto 1.5rem'
-          }}>
-            <Mail size={24} color="white" />
-          </div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1rem' }}>
-            Check Your Email
-          </h1>
-          <p style={{ color: '#9ca3af', marginBottom: '1.5rem' }}>
-            We've sent a verification link to{' '}
-            <strong style={{ color: '#ffffff' }}>{formData.email}</strong>
-          </p>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '2rem' }}>
-            Click the link in your email to verify your account and complete registration.
-          </p>
-          <button
-            onClick={() => setCurrentView('login')}
-            style={buttonStyle}
-          >
-            Back to Login
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Forgot Password View
-  if (currentView === 'forgot') {
-    return (
-      <div style={containerStyle}>
-        <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <button
-              onClick={() => setCurrentView('login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#9ca3af',
-                cursor: 'pointer',
-                marginRight: '1rem'
-              }}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>Reset Password</h1>
-              <p style={{ color: '#9ca3af', fontSize: '0.875rem' }}>
-                Enter your email to reset your password
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <div>
-              <label style={labelStyle}>Email Address</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  style={inputStyle}
-                  placeholder="Enter your email"
-                />
-                <Mail style={{
-                  position: 'absolute',
-                  left: '0.75rem',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: '#9ca3af'
-                }} size={16} />
+            {/* Forgot Password Link */}
+            {!requires2FA && (
+              <div className="text-center">
+                <Link
+                  to="/forgot-password"
+                  className="text-blue-400 hover:text-blue-300 text-sm"
+                >
+                  Forgot your password?
+                </Link>
               </div>
-            </div>
-
-            <button
-              onClick={() => {
-                alert('Password reset link sent to your email!');
-                setCurrentView('login');
-              }}
-              style={buttonStyle}
-            >
-              Send Reset Link
-            </button>
-          </div>
+            )}
+          </form>
         </div>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 };
 
-export default LoginSystem;
+export default Login;

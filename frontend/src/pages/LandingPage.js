@@ -1,216 +1,198 @@
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Shield, Music, Mail, Lock, Users, Zap, Star, CheckCircle } from 'lucide-react';
+// frontend/src/pages/LandingPage.js - Professional Landing Page
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import {
+  Shield,
+  Lock,
+  Mail,
+  Smartphone,
+  ArrowRight,
+  CheckCircle,
+  Music,
+  Users,
+  Zap
+} from 'lucide-react';
 
-const EchoWerkLanding = () => {
-  const [activeSection, setActiveSection] = useState('home');
-  const [isScrolled, setIsScrolled] = useState(false);
+const LandingPage = () => {
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
+  // Redirect if already authenticated
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const features = [
     {
       icon: <Shield className="w-8 h-8" />,
-      title: "Enterprise Security",
-      description: "Military-grade encryption with two-factor authentication and advanced threat protection."
-    },
-    {
-      icon: <Music className="w-8 h-8" />,
-      title: "Smart Music Management",
-      description: "Intelligent organization and discovery powered by machine learning algorithms."
-    },
-    {
-      icon: <Mail className="w-8 h-8" />,
-      title: "Verified Authentication",
-      description: "Email verification and secure login system with instant account activation."
+      title: "Secure Authentication",
+      description: "Enterprise-grade security with email verification and two-factor authentication"
     },
     {
       icon: <Lock className="w-8 h-8" />,
-      title: "Privacy First",
-      description: "Your data stays yours. Zero tracking, zero ads, maximum privacy protection."
+      title: "Data Protection",
+      description: "Your data is encrypted and protected with industry-standard security measures"
+    },
+    {
+      icon: <Smartphone className="w-8 h-8" />,
+      title: "Two-Factor Auth",
+      description: "Add an extra layer of security with TOTP-based two-factor authentication"
+    },
+    {
+      icon: <Mail className="w-8 h-8" />,
+      title: "Email Verification",
+      description: "Secure email verification system to protect your account from unauthorized access"
     }
   ];
 
-  const stats = [
-    { value: "99.9%", label: "Uptime" },
-    { value: "256-bit", label: "Encryption" },
-    { value: "<100ms", label: "Response Time" },
-    { value: "24/7", label: "Support" }
+  const benefits = [
+    "Secure user authentication and authorization",
+    "Email verification with customizable templates",
+    "Two-factor authentication (TOTP)",
+    "Password reset and recovery",
+    "Session management and security",
+    "Rate limiting and abuse prevention"
   ];
+
+  if (isAuthenticated) {
+    return null; // Will redirect via useEffect
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
-      {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-slate-900/95 backdrop-blur-md border-b border-slate-800' : 'bg-transparent'
-      }`}>
+      {/* Header */}
+      <header className="border-b border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="flex items-center">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                  <Music className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">EchoWerk</span>
+              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-3">
+                <Music className="w-5 h-5 text-white" />
               </div>
+              <span className="text-xl font-bold">EchoWerk</span>
             </div>
-
-            <div className="hidden md:block">
-              <div className="ml-10 flex items-baseline space-x-4">
-                <a href="#features" className="hover:text-blue-400 px-3 py-2 transition-colors">Features</a>
-                <a href="#security" className="hover:text-blue-400 px-3 py-2 transition-colors">Security</a>
-                <a href="#about" className="hover:text-blue-400 px-3 py-2 transition-colors">About</a>
-              </div>
-            </div>
-
             <div className="flex items-center space-x-4">
-              <button className="text-gray-300 hover:text-white px-4 py-2 transition-colors">
+              <Link
+                to="/login"
+                className="text-gray-300 hover:text-white px-3 py-2 transition-colors"
+              >
                 Sign In
-              </button>
-              <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-6 py-2 rounded-lg font-medium transition-all duration-200 flex items-center group">
+              </Link>
+              <Link
+                to="/register"
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-colors"
+              >
                 Get Started
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
-      </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto text-center">
-          <div className="mb-8">
-            <div className="inline-flex items-center px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-full text-sm text-blue-400 mb-8">
-              <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
-              Production Ready Authentication System
-            </div>
-          </div>
-
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Secure Music
-            <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent block">
-              Authentication
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6">
+            Secure Authentication
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+              for Music Applications
             </span>
           </h1>
-
-          <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Professional-grade authentication system with email verification, two-factor authentication,
-            and enterprise security features built for modern music applications.
+          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
+            EchoWerk provides enterprise-grade authentication and security features
+            specifically designed for music and media applications.
           </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 flex items-center justify-center group">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              to="/register"
+              className="bg-blue-600 hover:bg-blue-700 px-8 py-3 rounded-lg font-semibold text-lg transition-colors inline-flex items-center justify-center"
+            >
               Create Account
-              <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-            </button>
-            <button className="border border-gray-600 hover:border-gray-500 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 hover:bg-gray-800">
-              View Demo
-            </button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-blue-400 mb-2">{stat.value}</div>
-                <div className="text-gray-400 text-sm">{stat.label}</div>
-              </div>
-            ))}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Link>
+            <Link
+              to="/login"
+              className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-semibold text-lg transition-colors hover:bg-gray-800"
+            >
+              Sign In
+            </Link>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-800/50">
+      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-slate-800">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Enterprise Features</h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Built with security and scalability in mind for professional music applications
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Authentication Features
+            </h2>
+            <p className="text-xl text-gray-300">
+              Built with security and developer experience in mind
             </p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-slate-800/50 border border-slate-700/50 rounded-xl p-6 hover:border-blue-500/30 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div
+                key={index}
+                className="bg-slate-700 border border-slate-600 rounded-lg p-6 hover:border-blue-500 transition-colors"
+              >
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
                   {feature.icon}
                 </div>
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                <p className="text-gray-300">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Security Section */}
-      <section id="security" className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
+      {/* Benefits Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl md:text-4xl font-bold mb-6">
-                Security First
-                <span className="text-blue-400 block">Architecture</span>
+                Why Choose EchoWerk?
               </h2>
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Every component is designed with security as the foundation. From encrypted data storage
-                to secure API endpoints, your users' data is protected at every layer.
+              <p className="text-xl text-gray-300 mb-8">
+                Get started quickly with a comprehensive authentication system
+                that handles security so you can focus on building your application.
               </p>
-
               <div className="space-y-4">
-                {[
-                  "AES-256 encryption for all data",
-                  "TOTP-based two-factor authentication",
-                  "Secure email verification system",
-                  "Rate limiting and DDoS protection",
-                  "SOC 2 compliant infrastructure"
-                ].map((item, index) => (
+                {benefits.map((benefit, index) => (
                   <div key={index} className="flex items-center">
                     <CheckCircle className="w-5 h-5 text-green-400 mr-3 flex-shrink-0" />
-                    <span className="text-gray-300">{item}</span>
+                    <span className="text-gray-300">{benefit}</span>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-2xl p-8">
+            <div className="bg-slate-800 border border-slate-700 rounded-lg p-8">
               <div className="text-center">
                 <div className="w-16 h-16 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Shield className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold mb-4">Security Score</h3>
-                <div className="text-5xl font-bold text-green-400 mb-2">A+</div>
-                <p className="text-gray-400">Industry Leading Protection</p>
-
-                <div className="mt-8 space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span>Encryption</span>
-                    <span className="text-green-400">100%</span>
+                <h3 className="text-2xl font-bold mb-4">Security First</h3>
+                <p className="text-gray-300 mb-6">
+                  Every feature is built with security as the foundation,
+                  ensuring your users' data is always protected.
+                </p>
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-400">256-bit</div>
+                    <div className="text-xs text-gray-400">Encryption</div>
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-green-400 h-2 rounded-full w-full"></div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-400">2FA</div>
+                    <div className="text-xs text-gray-400">Protected</div>
                   </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span>Authentication</span>
-                    <span className="text-green-400">100%</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-green-400 h-2 rounded-full w-full"></div>
-                  </div>
-
-                  <div className="flex justify-between text-sm">
-                    <span>Data Protection</span>
-                    <span className="text-green-400">100%</span>
-                  </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
-                    <div className="bg-green-400 h-2 rounded-full w-full"></div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-400">99.9%</div>
+                    <div className="text-xs text-gray-400">Uptime</div>
                   </div>
                 </div>
               </div>
@@ -223,64 +205,32 @@ const EchoWerkLanding = () => {
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-blue-600 to-purple-700">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to Secure Your Music Platform?
+            Ready to Get Started?
           </h2>
           <p className="text-xl mb-8 opacity-90">
-            Get started with EchoWerk's authentication system in minutes, not hours.
+            Create your account and experience secure authentication in minutes.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200">
-              Start Free Trial
-            </button>
-            <button className="border border-white/30 hover:border-white/50 px-8 py-4 rounded-lg font-semibold text-lg transition-all duration-200 hover:bg-white/10">
-              Contact Sales
-            </button>
-          </div>
+          <Link
+            to="/register"
+            className="bg-white text-blue-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg transition-colors inline-flex items-center"
+          >
+            Create Your Account
+            <ArrowRight className="w-5 h-5 ml-2" />
+          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-4 sm:px-6 lg:px-8 bg-slate-900 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mr-3">
-                  <Music className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">EchoWerk</span>
-              </div>
-              <p className="text-gray-400 mb-4 max-w-md">
-                Professional authentication system for modern music applications.
-                Built with security, scalability, and developer experience in mind.
-              </p>
+      <footer className="py-8 px-4 sm:px-6 lg:px-8 bg-slate-900 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center">
+          <div className="flex items-center mb-4 md:mb-0">
+            <div className="w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center mr-2">
+              <Music className="w-4 h-4 text-white" />
             </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <div className="space-y-2">
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Features</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Security</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Documentation</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">API Reference</a>
-              </div>
-            </div>
-
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <div className="space-y-2">
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">About</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Contact</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Privacy</a>
-                <a href="#" className="block text-gray-400 hover:text-white transition-colors">Terms</a>
-              </div>
-            </div>
+            <span className="font-semibold">EchoWerk</span>
           </div>
-
-          <div className="border-t border-slate-800 mt-8 pt-8 text-center">
-            <p className="text-gray-400">
-              © 2025 EchoWerk. All rights reserved.
-            </p>
+          <div className="text-gray-400 text-sm">
+            © 2025 EchoWerk. Secure authentication platform.
           </div>
         </div>
       </footer>
@@ -288,4 +238,4 @@ const EchoWerkLanding = () => {
   );
 };
 
-export default EchoWerkLanding;
+export default LandingPage;
